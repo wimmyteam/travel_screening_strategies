@@ -1,12 +1,32 @@
+# colour palettes
+lshtm_greens <- rev(c("#00BF6F","#0d5257"))
 covid_pal <- c("#e66101", "#5e3c99", "#0571b0")
 
+# probabilities for quantiles
+probs        <- c(0.025,0.25,0.5,0.75,0.975)
+
+# graphics option just in case
 pdf.options(useDingbats=FALSE)
 
+# re-labelling pre-boarding screening
 pre_board_labels <- c("NA" = "None",
                       "1"  = "-1 day",
                       "4"  = "-4 days",
                       "7"  = "-7 days")
 
+
+add_pre_board_labels <- function(x){
+  #inner_join(input) %>% # might we do this here?
+  mutate(x,
+         pre_board_screening_label =
+           as.factor(pre_board_screening),
+         pre_board_screening_label = 
+           fct_explicit_na(pre_board_screening_label, "NA"),
+         pre_board_screening_label = factor(pre_board_screening_label,
+                                            levels = names(pre_board_labels),
+                                            labels = pre_board_labels, ordered = T))}
+
+# how many tests are required for each type of release
 released_labels <- c("Released after mandatory isolation" =
                        "None",
                      "Released after first test" =
@@ -14,6 +34,7 @@ released_labels <- c("Released after mandatory isolation" =
                      "Released after second test" =
                        "Two")
 
+# relabelling stringency
 test_labeller <- function(x){
   mutate(x,
          tests = case_when(!is.na(second_test_delay) ~ "Two",
@@ -33,49 +54,17 @@ test_labeller <- function(x){
                              ordered = T))
 }
 
+# relabelling type
 type_labels <- c("asymptomatic" =
                    "Asymptomatic",
                  "symptomatic" =
                    "Pre-symptomatic")
 
-# is this not common to many scripts?
-# move to utils.R
-main_scenarios <-
-  list(`low` = 
-         crossing(released_test = c("Released after first test",
-                                    "Released after mandatory isolation"),
-                  pre_board_screening = c(NA,1,4,7)),
-       `moderate` = 
-         crossing(released_test = c("Released after first test",
-                                    "Released after mandatory isolation"),
-                  pre_board_screening = c(NA,1,4,7)),
-       `high` = 
-         crossing(released_test = "Released after second test",
-                  pre_board_screening = c(NA,1,4,7)),
-       `maximum` = 
-         crossing(released_test = c("Released after first test",
-                                    "Released after mandatory isolation"),
-                  pre_board_screening = c(NA,1,4,7))
-  ) %>%
-  bind_rows(.id = "stringency") %>%
-  mutate(stage_released = "Infectious",
-         stringency = fct_inorder(stringency)) 
-
-
-
-add_pre_board_labels <- function(x){
-  #inner_join(input) %>% # might we do this here?
-  mutate(x,
-         pre_board_screening_label =
-           as.factor(pre_board_screening),
-         pre_board_screening_label = 
-           fct_explicit_na(pre_board_screening_label, "NA"),
-         pre_board_screening_label = factor(pre_board_screening_label,
-                                            levels = names(pre_board_labels),
-                                            labels = pre_board_labels, ordered = T))}
-
+# parameter for effectiveness of syndromic screening and self-selection
+# see gostic.R and its outputs
 syndromic_sensitivity <- 0.7
 
+# all scenarios used for modelling
 input <- 
   tibble(pathogen = "SARS-CoV-2") %>%
   mutate(syndromic_sensitivity = syndromic_sensitivity)  %>%
@@ -106,10 +95,29 @@ input <-
            results_delay       =  1) %>%
   mutate(scenario=row_number()) 
 
-# probabilities for quantiles
-probs        <- c(0.025,0.25,0.5,0.75,0.975)
-lshtm_greens <- rev(c("#00BF6F","#0d5257"))
+# scenarios used for analysis
+main_scenarios <-
+  list(`low` = 
+         crossing(released_test = c("Released after first test",
+                                    "Released after mandatory isolation"),
+                  pre_board_screening = c(NA,1,4,7)),
+       `moderate` = 
+         crossing(released_test = c("Released after first test",
+                                    "Released after mandatory isolation"),
+                  pre_board_screening = c(NA,1,4,7)),
+       `high` = 
+         crossing(released_test = "Released after second test",
+                  pre_board_screening = c(NA,1,4,7)),
+       `maximum` = 
+         crossing(released_test = c("Released after first test",
+                                    "Released after mandatory isolation"),
+                  pre_board_screening = c(NA,1,4,7))
+  ) %>%
+  bind_rows(.id = "stringency") %>%
+  mutate(stage_released = "Infectious",
+         stringency = fct_inorder(stringency)) 
 
+# functions for handling gamma distributions of time to event
 mv2gamma <- function(mean, var){
   list(shape = mean^2/var,
        rate  = mean/var,
@@ -124,7 +132,6 @@ gamma2mv <- function(shape, rate=NULL, scale=NULL){
   list(mean = shape/rate,
        var  = shape/rate^2)
 }
-
 
 time_to_event <- function(n, mean, var){
   if (var > 0){
@@ -651,18 +658,16 @@ beta.parms.from.quantiles <- function(q, p=c(0.025,0.975),
   list(a=parms$theta[1], b=parms$theta[2], last.change=parms$last.change, niter=parms$niter, q=q, p=p, p.check=p.check)
 }
 
-# list of pathogens that may be worth considering as sensitivity
-
+# Incubation distribution parameters
 gamma.parms.from.quantiles(q = c(5.1, 11.5),
                            p = c(0.5, 0.975)) %>%
   {list(shape = .$shape, scale = .$scale)} -> inc_parms
 
+# clinical progression data frame for symptomatic and asymptomatic infections
 pathogen <- list(
   symptomatic = 
     # review paper Byrne et al. (2020) https://doi.org/10.1101/2020.04.25.20079889
     # define T1 as infection to beginning of presymptomatic infectious period
-    
-    
     append(
       # https://www.acpjournals.org/doi/10.7326/M20-0504
       gamma.parms.from.quantiles(q = c(5.1, 11.5),
@@ -674,8 +679,6 @@ pathogen <- list(
       # Li et al https://www.nejm.org/doi/full/10.1056/nejmoa2001316
       {c(9.1, 14.7)} %>% 
         set_names(., c("mu_inf", "sigma_inf"))),
-  
-  
   
   asymptomatic = 
     append(
@@ -691,15 +694,14 @@ pathogen <- list(
         sigma_inf = 12))) %>%
   map(~data.frame(.x), .id = "type")
 
+# what proportion of cases are asymptomatic?
+# buitrago-garcia's living review
 asymp_fraction <- beta.parms.from.quantiles(q = c(0.03,  0.55),
                                             p = c(0.025, 0.975)) %>%
   {list(shape1 = .$a,
         shape2 = .$b)}
 
-
-
-
-
+# function for generating arriving travellers
 arrivals_fun <- function(x, trav_vol, sims=1){
   
   weekly_arrivals <- rbinom(n = sims, size = trav_vol, prob = 7/30)  
@@ -717,7 +719,8 @@ arrivals_fun <- function(x, trav_vol, sims=1){
 }
 
 # red zones are countries with a higher prevalence of active cases
-
+# not used in this analysis but may be worth considering if you're looking fo
+# examples of high and low prevalence countries to use
 prev_est <- read_csv("data/currentPrevalenceEstimates_20_07_2020.csv")
 
 zones <- 
@@ -736,7 +739,7 @@ zones <-
                           origin_prev = propCurrentlyInfMid),
             by = "origin")
 
-
+# calculating prevalence estimates for USA and aggregated EU
 prev_est_region <-
   prev_est %>%
   mutate(region = countrycode::countrycode(country,
@@ -751,9 +754,10 @@ prev_est_region <-
          country = region) %>%
   nest(q = c(propCurrentlyInfMid, propCurrentlyInfLow)) %>% 
   mutate(gamma_parms = map(.x = q,
-                           .f = ~gamma.parms.from.quantiles(q = unlist(.x), 
-                                                            #start.with.normal.approx = T,
-                                                            p = c(0.5, 0.025))
+                           .f = ~gamma.parms.from.quantiles(
+                             q = unlist(.x), 
+                             #start.with.normal.approx = T,
+                             p = c(0.5, 0.025))
   ),
   gamma_parms_ = map(gamma_parms, ~list(shape = .x$shape,
                                         rate  = .x$rate,
@@ -793,10 +797,11 @@ flight_vols <-
                EU  = 18186680*0.01,
                USA = US_flight_vol$total*0.01)) 
 
-
+# assume average flight time of 8 hours from USA-UK and 2 from EU-UK
 flight_times <- data.frame(country    = c("EU", "USA"),
                            dur_flight = c(2/24, 8/24))
 
+# what proportion of travellers are symptomatic or asymptomatic
 make_proportions <- function(prev_est_region,
                              origin_country = "United Kingdom",
                              asymp_parms,
@@ -812,14 +817,11 @@ make_proportions <- function(prev_est_region,
     summarise(., prev = weighted.mean(x = prev,
                                       w = population)) %>% unlist
   
-  
   # sample prevalences from the country
   
   prop.asy <- rbeta(n = n, 
                     shape1 = asymp_parms$shape1,
                     shape2 = asymp_parms$shape2)
-  
-  #prev <- unlist(filter(prev_est, country == origin_country)$propCurrentlyInfMid)
   
   data.frame(symptomatic = (1-prop.asy)*prev,  # symptomatic
              asymptomatic = prop.asy*prev) %>%
@@ -827,6 +829,7 @@ make_proportions <- function(prev_est_region,
   
 }
 
+# make prevalence estimates for each region
 make_prevalence <- function(prev_est_region,
                             origin_country = "United Kingdom",
                             n = 1){
@@ -847,9 +850,8 @@ make_prevalence <- function(prev_est_region,
   
 }
 
-
+# each traveller needs a random quantile which can be used across all scenarios
 gen_screening_draws <- function(x){
-  
   
   n <- nrow(x)
   
@@ -919,6 +921,7 @@ calc_outcomes <- function(x, dat_gam){
   
 }
 
+# when does each traveller exit the quarantine system?
 when_released <- function(x){
   
   mutate(x, released_test = case_when(
@@ -983,6 +986,7 @@ when_released <- function(x){
                                                      symp_end, max_mqp), released_t))
 }
 
+# convert from time of release to status at release
 stage_when_released <- function(x){
   
   mutate(x, stage_released = as.factor(case_when(
@@ -999,10 +1003,10 @@ stage_when_released <- function(x){
                   inf_end - pmax(released_t, inf_start),
                 type           == "symptomatic" ~ 
                   onset   - pmax(released_t, inf_start)))
-  
 }
 
-
+# short little function for comparing PCR curve value to random quantile from
+# gen_screening_draws
 detector <- function(pcr, u = NULL, spec = 1){
   
   if (is.null(u)){
@@ -1019,7 +1023,7 @@ detector <- function(pcr, u = NULL, spec = 1){
   return(TP | FP)
 }
 
-
+# function to make plot labels from model output
 make_plot_labels <- function(x){
   mutate(x, country = paste("Origin:",
                             ifelse(country == "United States of America",
@@ -1060,58 +1064,7 @@ make_plot_labels <- function(x){
     {bind_cols(x, .)}
 }
 
-
-make_delay_label <- function(x,s){
-  paste(na.omit(x), s)
-}
-
-
-
-
-capitalize <- function(string) {
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  string
-}
-
-bivariate_color_scale <- tibble(
-  "3 - 6" = "#574249", 
-  "2 - 6" = "#5B6570",
-  "1 - 6" = "#608997", 
-  "0 - 6" = "#64ACBE", 
-  "3 - 4" = "#985356",
-  "2 - 4" = "#A07E84", 
-  "1 - 4" = "#A8AAB1",
-  "0 - 4" = "#B0D5DF",
-  "3 - 2" = "#C85A5A", 
-  "2 - 2" = "#D38989",
-  "1 - 2" = "#DDB9B9",
-  "0 - 2" = "#E8E8E8"
-) %>%
-  gather("delays_minus", "colour") %>% 
-  mutate(delays=str_replace_all(delays_minus," - ", " + "))
-
-bivariate_color_scale_leg <- bivariate_color_scale %>%
-  separate(delays_minus, into = c("first_test_delay", "second_test_delay"), sep = " - ")
-
-legend <- ggplot() +
-  geom_tile(
-    data = bivariate_color_scale_leg,
-    mapping = aes(
-      x = first_test_delay,
-      y = second_test_delay,
-      fill = colour)
-  ) +
-  scale_fill_identity() +
-  labs(x = "Days until first test",
-       y = "Days after first test\n until second test") +
-  theme_minimal()+
-  labs(subtitle = "Two test regimen")+
-  theme(plot.subtitle = element_text(hjust = 0.5),
-        text = element_text(size = 12)
-  ) +
-  # quadratic tiles
-  coord_fixed()
-
+# function to generate relevant clinical times for travellers
 make_incubation_times <- function(
   n_travellers,
   pathogen,
@@ -1181,6 +1134,7 @@ make_incubation_times <- function(
   
 }
 
+# function to make the infectious arrivals given traveller volumes
 make_inf_arrivals <- function(countries,
                               prev_est_region,
                               n_arrival_sims,
@@ -1241,7 +1195,7 @@ make_inf_arrivals <- function(countries,
   
 }
 
-
+# work out how many intended travellers there are
 make_travellers <- function(x, # contains relevant parameters
                             incubation_times,
                             trav_vol,
@@ -1249,8 +1203,7 @@ make_travellers <- function(x, # contains relevant parameters
                             xi = NULL,
                             fixed = TRUE){
   
-  # incubation_times should be big
-  # sims: number of simulations being performed. should be 1.
+  # incubation_times should be a big data frame
   # trav_vol: should already be scaled
   
   sims <- nrow(x)
@@ -1290,7 +1243,7 @@ make_travellers <- function(x, # contains relevant parameters
              not_symp)
 }
 
-
+# unnesting travellers as individuals
 travellers_to_individuals <- function(x, incubation_times){
   
   keys <- list(asymptomatic   =
@@ -1327,7 +1280,7 @@ travellers_to_individuals <- function(x, incubation_times){
   
 }
 
-
+# cross the scenarios and arriving travellers so they're ready for screening
 make_arrival_scenarios <- function(input, inf_arrivals, incubation_times){
   source('kucirka_fitting.R', local=T)
   
@@ -1340,6 +1293,7 @@ make_arrival_scenarios <- function(input, inf_arrivals, incubation_times){
   
 }
 
+# make a plot showing the number of people released from each scenario
 make_release_figure <- function(x,
                                 input,
                                 xlab = "Days in quarantine",
@@ -1495,7 +1449,7 @@ fun.max.ci <- function(x){
   
 }
 
-
+# generate the data frame to be fed into the plotting function above
 plot_data <- function(input, arrival_released_times_summaries,
                       main_scenarios = NULL){
   
@@ -1547,6 +1501,7 @@ plot_data <- function(input, arrival_released_times_summaries,
     return
 }
 
+# function to make a table of expected arrivals
 make_arrivals_table <- function(x, table_vars = c("country")){
   x %>%
     mutate(sim = factor(sim, levels = 1:n_arrival_sims)) %>%
@@ -1564,7 +1519,7 @@ make_arrivals_table <- function(x, table_vars = c("country")){
     spread(country, value)
 }
 
-
+# build plots from modelling output
 make_plots <- function(
   arrival_released_times, 
   input,
@@ -1661,7 +1616,8 @@ make_plots <- function(
 }
 
 
-
+# functions to generate data for plotting based on appropriate grouping structure
+# this one is for number of released travellers
 make_arrival_released_quantiles <- function(x, vars){
   
   dots1 <- rlang::exprs(sim, scenario)
@@ -1697,6 +1653,7 @@ make_arrival_released_quantiles <- function(x, vars){
     dplyr::ungroup(.)
 }
 
+# as above but for days infectious
 make_arrival_released_time_quantiles <- function(x, vars, sum = FALSE){
   
   
@@ -1726,8 +1683,8 @@ make_arrival_released_time_quantiles <- function(x, vars, sum = FALSE){
   
 }
 
-
-
+# function to save the plot with a file name
+# defaults to a random string if not specified
 save_plot <- function(plot   = ggplot2::last_plot(),
                       prefix = stringi::stri_rand_strings(1, length = 8),
                       base   = NULL, # to help identify which figure in the paper
@@ -1751,7 +1708,7 @@ save_plot <- function(plot   = ggplot2::last_plot(),
   
   device <- grep("pdf", x = device, value = T, invert = T)
   
-  if (length(device) > 0L){
+  if (length(device) > 0L & require(magick)){
     #img <- pdftools::pdf_render_page(file, dpi = dpi)
     
     img <- magick::image_read(file, density = dpi)

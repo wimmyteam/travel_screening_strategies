@@ -1,6 +1,6 @@
 # travel_screening_strategies
 
-This repository contains the code used in [Clifford and Quilty et al. (2020)](https://www.medrxiv.org/content/10.1101/2020.07.24.20161281v2) - *Strategies to reduce the risk of SARS-CoV-2 re-introduction from international travellers*. **This article is not yet peer reviewed**.
+This repository contains the R code used in [Clifford and Quilty et al. (2020)](https://www.medrxiv.org/content/10.1101/2020.07.24.20161281v2) - *Strategies to reduce the risk of SARS-CoV-2 re-introduction from international travellers*. **This article is not yet peer reviewed**.
 
 This code can be downloaded as a ZIP file or cloned/forked as a github repository.
 
@@ -28,7 +28,13 @@ We call on a number of additional packages to run and visualise our models. Thes
 
 The model simulates travellers from the EU and USA using estimates of travel volume for July based on CAA data and prevalence in relevant countries from [Russell et al. (2020)](https://cmmid.github.io/topics/covid19/global_cfr_estimates.html). The same travellers are screened according to the various scenarios and we track when they are released (e.g. prior to becoming infectious, during their infectious period, or after their infectious period has ended).
 
+![Traveller trajectories for considered screening scenarios](figures/traveller_screening.svg)
+
+Figure: Possible traveller trajectories for the considered screening scenarios. Screening (purple diamonds) occurs pre-flight and/or post-flight and may include managed quarantine periods (yellow boxes). Travellers found to be infected pre-flight are prevented from boarding (orange boxes pre-flight); travellers found to be infected during managed quarantine are diverted to mandatory quarantine (orange boxes post-flight). Travellers enter the community after the required number of negative tests (regardless of infection status) or after meeting the requirements of the mandatory quarantine.
+
 We report the number travellers released while they still have the potential to infect, as well as the number of days for which these potentially infectious travellers remain infectious. These are presented as depending on country of origin, number of days spent in quarantine, stringency of quarantine, number of tests required to clear quarantine, and, optionally, whether they are ever-symptomatic or always asymptomatic.
+
+All figures are, by default, created as PDF files. If you have [imagemagick](https://imagemagick.org/index.php) installed and configured (and the `{magick}` package) the `save_plot()` function can accept additional graphics formats and use imagemagick to convert them within the plotting code.
 
 ## Authors’ Contributions
 
@@ -36,3 +42,6 @@ Samuel Clifford, Billy J Quilty, Stefan Flasche and W John Edmunds conceived the
 
 A full list of the members of the CMMID COVID-19 working group and funding statement can be found in the [preprint](https://www.medrxiv.org/content/10.1101/2020.07.24.20161281v2).
 
+## Getting help
+
+We provide the code as-is, and assume you know your way around R if you're intending to use it. This code is not provided with any warranty. You can use this repository's [Issues](https://github.com/cmmid/travel_screening_strategies/issues) tab to raise any errors you receive, unexpected behaviour, or model feedback.

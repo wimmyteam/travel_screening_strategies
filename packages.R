@@ -17,7 +17,7 @@ pacman::p_load(char = c("tidyverse",
                         "patchwork",
                         "ggnewscale",
                         "formula.tools",
-                        "extrafont",
+                        "magick",
                         "measurements"))
 
 conflicted::conflict_prefer("set_names", "purrr")
