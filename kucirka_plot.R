@@ -56,7 +56,7 @@ fig1 <- kucirka_plot / distributions_plot + plot_layout(ncol = 1, guide = "colle
                   theme = theme(legend.position = "bottom"))
 
 list("png", "pdf") %>%
-  map(~ggsave(filename = paste0("results/fig1_.",.x),
+  map(~ggsave(filename = paste0("figures/fig1_.",.x),
               plot     = fig1,
               width    = 210,
               height   = 210,

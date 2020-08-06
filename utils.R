@@ -1694,7 +1694,7 @@ save_plot <- function(plot   = ggplot2::last_plot(),
                       dpi    = 300,
                       units  = "mm"){
   
-  file <- paste0("results/",
+  file <- paste0("figures/",
                  paste(prefix, base, sep = "_"),
                  ".pdf")
   

@@ -171,7 +171,7 @@ run_rr_analysis <-
                   collapse = " ")
     
     list("png", "pdf") %>%
-      map(~ggsave(filename = paste0("results/rr_figs_baseline_",
+      map(~ggsave(filename = paste0("figures/rr_figs_baseline_",
                                     file,".",.x),
                   plot=rr_figs,
                   width = 210, 
@@ -179,12 +179,9 @@ run_rr_analysis <-
                                             !!lhs(faceting))), units="mm",
                   dpi = 320))
     
-    #write.csv(n_fig_data,paste0("results/baseline_",baseline_scenario,"_n_RR_results.csv"))
-    #write.csv(pd_fig_data,paste0("results/baseline_",baseline_scenario,"_pd_RR_results.csv"))
+    #write.csv(n_fig_data,paste0("figures/baseline_",baseline_scenario,"_n_RR_results.csv"))
+    #write.csv(pd_fig_data,paste0("figures/baseline_",baseline_scenario,"_pd_RR_results.csv"))
     
-    return(list(arrival_released_times = n_risk_ratios#,
-                #n_fig_data             = n_fig_data,
-                #pd_fig_data            = pd_fig_data
-    ))
+    return(n_risk_ratios)
   }
 

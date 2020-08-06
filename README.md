@@ -4,7 +4,7 @@ This repository contains the R code used in [Clifford and Quilty et al. (2020)](
 
 This code can be downloaded as a ZIP file or cloned/forked as a github repository.
 
-The main file to run the analysis is `travel_screening_strategies.R`, which calls `utils.R` and other necessary files and writes plotting output to `/results/`.
+The main file to run the analysis is `travel_screening_strategies.R`, which calls `utils.R` and other necessary files and writes plotting output to `/figures/`.
 
 The code license is available in [LICENSE](LICENSE).
 

@@ -72,7 +72,7 @@ gostic_plot <- gostic_pred %>%
   scale_linetype_manual(values = c("FALSE" = 1, "TRUE" = 2), guide = FALSE)
 
 list("png", "pdf") %>%
-  map(~ggsave(filename = paste0("results/gostic.",.x),
+  map(~ggsave(filename = paste0("figures/gostic.",.x),
               plot=gostic_plot,
               width = 105, height = 70, units="mm",
               dpi = 320))
