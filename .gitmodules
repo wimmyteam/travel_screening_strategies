@@ -1,0 +1,6 @@
+[submodule "traveller_screening"]
+	path = traveller_screening
+	url = https://github.com/kgostic/traveller_screening.git
+[submodule "covidRTPCR"]
+	path = covidRTPCR
+	url = https://github.com/HopkinsIDD/covidRTPCR
