@@ -1462,12 +1462,6 @@ plot_data <- function(input, arrival_released_times_summaries,
              first_test_delay + 
              second_test_delay_+
              post_flight_screening) %>% 
-    # mutate(pre_board_screening = as.factor(pre_board_screening)) %>% 
-    # mutate(pre_board_screening = fct_explicit_na(pre_board_screening, "NA")) %>% 
-    # mutate(pre_board_screening = factor(pre_board_screening,
-    #                                     levels = names(pre_board_labels),
-    #                                     labels = pre_board_labels, ordered = T)) %>% 
-    
     inner_join(arrival_released_times_summaries) 
   
   if (!is.null(main_scenarios)){
@@ -1476,28 +1470,13 @@ plot_data <- function(input, arrival_released_times_summaries,
   }
   
   dat %>%  
-    #tidyr::nest(data = -c(first_test_delay, second_test_delay)) %>%
     tidyr::unite(col = "delays",
                  first_test_delay, second_test_delay,
                  sep = " + ", remove = FALSE) %>%
-    #tidyr::unnest(data) %>%
     dplyr::mutate(time_in_iso = factor(time_in_iso, 
                                        levels = sort(unique(.$time_in_iso)),
                                        ordered = T)) %>%
-    # dplyr::mutate(stringency = factor(stringency,
-    #                                   levels = c("low",
-    #                                              "moderate",
-    #                                              "high",
-    #                                              "maximum"),
-    #                                   labels = c("Low",
-    #                                              "Mod.",
-    #                                              "High",
-    #                                              "Max."),
-    #                                   ordered = T)) %>%
     dplyr::filter(M > 0 | is.infinite(M) | is.na(M)) %>%  # if the mean is zero, this group is empty
-    #dplyr::mutate(released_test = factor(released_test,
-    #                                     levels = names(released_labels),
-    #                                     labels = released_labels, ordered = T)) 
     return
 }
 
