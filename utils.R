@@ -765,9 +765,41 @@ prev_est_region <-
   unnest_wider(gamma_parms_)
 
 
+eu_country_names <- data.frame(
+  name = c(
+    "Austria",
+    "Belgium",
+    "Bulgaria",
+    "Croatia",
+    "Cyprus",
+    "Czech Republic",
+    "Denmark",
+    "Estonia",
+    "Finaldn",
+    "France",
+    "Germany",
+    "Greece",
+    "Hungary",
+    "Ireland",
+    "Italy",
+    "Latvia",
+    "Lithuania",
+    "Luxembourg",
+    "Malta",
+    "Netherlands",
+    "Poland",
+    "Portugal",
+    "Romania",
+    "Slovakia",
+    "Slovenia",
+    "Spain",
+    "Sweden"
+  )
+)
+
 prev_est_eu <- 
   prev_est %>%
-  inner_join(select(eurostat::eu_countries, country = name),
+  inner_join(select(eu_country_names, country = name),
              by = "country") %>%
   filter(country != "United Kingdom") %>%
   #select(country, propCurrentlyInfMid, population) %>%
