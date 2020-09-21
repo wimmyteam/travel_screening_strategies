@@ -744,12 +744,12 @@ prev_est_region <-
   prev_est %>%
   mutate(region = countrycode::countrycode(country,
                                            "country.name.en",
-                                           "eu28", warn = FALSE),
+                                           "iso.name.en", warn = FALSE),
          region = ifelse(country == "United States of America",
                          "USA",
                          region)) %>%
-  filter(!is.na(region),
-         country != "United Kingdom") %>%
+  mutate(region = country) %>%
+  filter(totalNewCases != 0) %>% # This is to prevent a function downstream from crashing
   rename(country.name.en = country,
          country = region) %>%
   nest(q = c(propCurrentlyInfMid, propCurrentlyInfLow)) %>% 
@@ -830,8 +830,8 @@ flight_vols <-
                USA = US_flight_vol$total*0.01)) 
 
 # assume average flight time of 8 hours from USA-UK and 2 from EU-UK
-flight_times <- data.frame(country    = c("EU", "USA"),
-                           dur_flight = c(2/24, 8/24))
+flight_times <- data.frame(country    = c("EU", "USA", "Peru"),
+                           dur_flight = c(2/24, 8/24, 2/24))
 
 # what proportion of travellers are symptomatic or asymptomatic
 make_proportions <- function(prev_est_region,
@@ -1172,12 +1172,13 @@ make_inf_arrivals <- function(countries,
                               n_arrival_sims,
                               asymp_fraction,
                               flight_vols = NULL,
-                              trav_vol_manual = NULL,
-                              trav_vol_p = 1,
+                              trav_vol_manual = NULL, #Whether number of travellers is set manually or not
+                              trav_vol_p = 1, #Percentage of people flying in 2020 VS 2019
                               flight_times,
                               incubation_times,
-                              fixed = FALSE){
-  
+                              fixed = fixed){
+  # Not sure what fixed does,it gets passed to function make_travellers.
+  # Not sure where the default value for fixed comes from, fixed is not in global scope
   
   inf_arrivals <- as.list(countries) %>%
     purrr::set_names(., .) %>%
@@ -1189,7 +1190,6 @@ make_inf_arrivals <- function(countries,
                                 shape1 = asymp_fraction$shape1,
                                 shape2 = asymp_fraction$shape2)) %>%
     tidyr::nest(data = -c(country)) 
-  
   if (!fixed){
     inf_arrivals <- dplyr::inner_join(inf_arrivals,
                                       dplyr::filter(flight_vols, year == 2020) %>%
@@ -1233,7 +1233,7 @@ make_travellers <- function(x, # contains relevant parameters
                             trav_vol,
                             trav_vol_p = 7/30,
                             xi = NULL,
-                            fixed = TRUE){
+                            fixed = TRUE){ # Ignores syndromatic screening if fixed = TRUE
   
   # incubation_times should be a big data frame
   # trav_vol: should already be scaled
@@ -1319,7 +1319,7 @@ make_arrival_scenarios <- function(input, inf_arrivals, incubation_times){
   arrival_scenarios <- crossing(input, inf_arrivals)
   
   # calculate outcomes of screening
-  arrival_scenarios %<>% calc_outcomes(., dat_gam)
+  arrival_scenarios %<>% calc_outcomes(., dat_gam) #dat_gam comes from kucirka_fitting.R
   
   return(arrival_scenarios)
   

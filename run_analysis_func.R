@@ -12,7 +12,7 @@ source("utils.R")
 run_analysis <- 
   function(n_arrival_sims  = 1000,
            countries       = c("EU", "USA"),
-           trav_vol_manual = NULL,
+           trav_vol_manual = TRUE,
            n_travellers    = 1e4,
            trav_vol_p      = 1,
            fixed           = TRUE,
