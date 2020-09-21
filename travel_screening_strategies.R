@@ -34,7 +34,7 @@ test_10k_fig_type <-
              faceting = country + type ~ stringency,
              pre_board_screening = FALSE)
 
-save_plot(test_fig_type, 
+save_plot(test_10k_fig_type,
           base = "type",
           prefix ="10k",
           height = 420, width = 210,
@@ -42,6 +42,8 @@ save_plot(test_fig_type,
 
 rr <- run_rr_analysis(test_10k, main_scenarios, 
                       baseline_scenario = baseline_low)
+  #This is for the risk-ratio analysis
+
 
 # TEST WITH REAL TRAVEL VOLUMES
 
