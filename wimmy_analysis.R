@@ -9,6 +9,7 @@ managed_quarentine_results <- run_partial_compliance_scenario(
   quarentine_days          = 3,
   syndromic_sensitivity    = syndromic_sensitivity,
   n_travellers             = 1000,
+  n_sims                   = 1000,
   flight_time              = 2/24,
   percent_compliant        = 100 # percentage
 )
