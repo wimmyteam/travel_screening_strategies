@@ -21,16 +21,20 @@ prevalence <- 0.05
 
 prev_vector <- rnorm(1000, prevalence, 0.01)
 
+undebug(make_inf_arrivals)
+
 inf_arrivals <- make_inf_arrivals(
-  countries       = c("Peru"),
-  prev_vector = prev_vector,
-  n_arrival_sims  = 1000,
-  asymp_fraction  = asymp_fraction,
-  flight_vols     = 1000,
-  flight_times    = flight_times,
-  trav_vol_manual = 2000,
+  #countries       = c("Peru"),
+  prev_vector      = prev_vector,
+  n_arrival_sims   = 1000,
+  asymp_fraction   = asymp_fraction,
+  #flight_vols     = 1000,
+  flight_time      = 2/24,
+  trav_vol         = 2000,
   incubation_times = incubation_times,
-  fixed            = TRUE)
+  syndromic_sensitivity = 0.7
+)
+  #fixed            = TRUE)
 
 
 input <- 
