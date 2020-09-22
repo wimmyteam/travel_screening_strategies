@@ -8,7 +8,7 @@ p("This is an interactive web application to visualize the number of days of inf
 "This model was adpted from Clifford et al and implemented by the team from", tags$a(href = "https://www.wimmy.co.za", "Wimmy.")),
 p("The model code lives in", tags$a(href = "https://github.com/wimmyteam/travel_screening_strategies", "GitHub.")))),
   tags$hr(), 
-  fluidRow(column(4),column(4,
+  fluidRow(column(5,
   wellPanel(
   sliderInput(inputId = "num",
               label = "choose a number",
@@ -25,14 +25,16 @@ p("The model code lives in", tags$a(href = "https://github.com/wimmyteam/travel_
   textInput(inputId = "title",
             label = "write the histogram title",
             value = "A histogram of random numbers")
-  )),column(4)),
+  )),column(2),
+  column(5, img(src = "PCR_sensitivity.png"))),
   fluidRow(
     column(6, tags$h4("Scenario 1"),
            plotOutput(outputId = "hist")),
   column(6, tags$h4("Scenario 2"),
          verbatimTextOutput(outputId = "stats"))
+  )
 )
-)
+
 # Define server logic required 
 server <- function(input, output) {
   data <- reactive({rnorm(input$num)})
