@@ -1039,7 +1039,7 @@ stage_when_released <- function(x){
                 type           == "asymptomatic" ~ 
                   inf_end - pmax(released_t, inf_start),
                 type           == "symptomatic" ~ 
-                  onset   - pmax(released_t, inf_start)))
+                  inf_end   - pmax(released_t, inf_start))) #changed from oneset to inf_end
 }
 
 # short little function for comparing PCR curve value to random quantile from
