@@ -1,0 +1,12 @@
+name: Shiny
+title: Shiny
+username:
+account: emanuel-dominic
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2848820
+bundleId: 3649781
+url: https://emanuel-dominic.shinyapps.io/Shiny/
+when: 1600635773.29952
+asMultiple: FALSE
+asStatic: FALSE
