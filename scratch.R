@@ -21,7 +21,6 @@ prevalence <- 0.05
 
 prev_vector <- rnorm(1000, prevalence, 0.01)
 
-undebug(make_inf_arrivals)
 
 inf_arrivals <- make_inf_arrivals(
   #countries       = c("Peru"),
@@ -65,7 +64,7 @@ results1 <- stage_when_released(arrival_released)
 
 
 # Call new function that runs a single scenario
-# This one doesn't work yet :P
+
 results2 <- run_scenario(
   prevalence               = 0.05,
   quarentine_days          = 3,

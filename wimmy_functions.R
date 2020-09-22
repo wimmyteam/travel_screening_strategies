@@ -26,7 +26,7 @@ run_scenario <- function(
     syndromic_sensitivity = syndromic_sensitivity
   )
 
-  prev_vector <- rnorm(n_travellers, prevalence, 0.01) # Ideally we would get distribution from model prediction
+  prev_vector <- rnorm(n_sims, prevalence, 0.01) # Ideally we would get distribution from model prediction
   
   inf_arrivals <- make_inf_arrivals(
     prev_vector     = prev_vector,
@@ -45,8 +45,8 @@ run_scenario <- function(
       `only` = 
         crossing(pre_board_screening = c(NA),
                  post_flight_screening = c(TRUE),
-                 first_test_delay = 3,
-                 second_test_delay = 0)) %>%
+                 first_test_delay = quarentine_days,
+                 second_test_delay = NA)) %>%
         bind_rows(.id = "stringency")) %>% 
     crossing(max_mqp             = 14,
              post_symptom_window =  7,

@@ -1189,7 +1189,7 @@ make_inf_arrivals <-
     purrr::set_names(., .) %>%
     purrr::map(~prev_vector) %>%
     purrr::map_dfr(.id = "country", ~data.frame(pi = .x)) %>%
-    dplyr::mutate(alpha = rbeta(n = trav_vol,
+    dplyr::mutate(alpha = rbeta(n = nrow(.),
                                 shape1 = asymp_fraction$shape1,
                                 shape2 = asymp_fraction$shape2)) %>%
     tidyr::nest(data = -c(country))
