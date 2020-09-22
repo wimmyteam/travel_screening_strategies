@@ -9,44 +9,44 @@
 source("run_analysis_func.R")
 
 # This function runs a single simulation
-estimate_infectious_days_per_traveller <- function(
-  prevalence = 0.05,
-  quarentine_days = 3,
-  quarentine_compliance = 0.8,
-  syndromatic_sensitivity = 0.7
+run_scenario <- function(
+  prevalence               = 0.05,
+  quarentine_days          = 3,
+  quarentine_compliance    = 1.0,
+  syndromic_sensitivity    = 0.7,
+  n_travellers             = 1000,
+  n_sims                   = 10,
+  flight_time              = 2/24
 )
 {
   set.seed(145)
   incubation_times <- make_incubation_times(
-    n_travellers = 1000,
+    n_travellers = n_travellers,
     pathogen = pathogen, # pathogen created in Utils.R
-    syndromic_sensitivity = 0.7
+    syndromic_sensitivity = syndromic_sensitivity
   )
-  # Result is 2000 objects of 19 variables. 1000 Symptomatic and 1000 Asymptomatic.
-  # Most columns are durations ie exposure_to_onset, onset_to_recovery etc.
-  # This function seems to build "random" symptomatic and asymptomatic "cases"
-  
+
+  prev_vector <- rnorm(n_travellers, prevalence, 0.01) # Ideally we would get distribution from model prediction
   
   inf_arrivals <- make_inf_arrivals(
-    countries       = c("Peru"),
-    prev_est_region = prev_est_region,
-    n_arrival_sims  = 1000,
-    asymp_fraction  = asymp_fraction,
-    flight_vols     = 1000,
-    flight_times    = flight_times,
-    trav_vol_manual = 2000,
+    prev_vector     = prev_vector,
+    n_arrival_sims  = n_sims,
+    asymp_fraction  = asymp_fraction, #Utils.R
+    trav_vol        = n_travellers,
+    flight_time     = flight_time,
     incubation_times = incubation_times,
-    fixed            = TRUE)
+    syndromic_sensitivity = syndromic_sensitivity
+  )
   
   input <- 
     tibble(pathogen = "SARS-CoV-2") %>%
-    mutate(syndromic_sensitivity = 0.7)  %>%
+    mutate(syndromic_sensitivity = syndromic_sensitivity)  %>%
     bind_cols(., list(
       `only` = 
         crossing(pre_board_screening = c(NA),
                  post_flight_screening = c(TRUE),
-                 first_test_delay = 1,
-                 second_test_delay = 3)) %>%
+                 first_test_delay = 3,
+                 second_test_delay = 0)) %>%
         bind_rows(.id = "stringency")) %>% 
     crossing(max_mqp             = 14,
              post_symptom_window =  7,

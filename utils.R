@@ -93,7 +93,8 @@ input <-
   crossing(max_mqp             = 14,
            post_symptom_window =  7,
            results_delay       =  1) %>%
-  mutate(scenario=row_number()) 
+  mutate(scenario=row_number())
+
 
 # scenarios used for analysis
 main_scenarios <-
@@ -1173,36 +1174,27 @@ make_incubation_times <- function(
 # function to make the infectious arrivals given traveller volumes
 make_inf_arrivals <- 
   function(
-    countries,
     prev_vector, #vector with prevalence values to use for each simulation(length = n_arrival_sims)
     n_arrival_sims,
-    asymp_fraction,
-    flight_vols = NULL,
-    trav_vol_manual = NULL, #Whether number of travellers is set manually or not
-    trav_vol_p = 1, #Percentage of people flying in 2020 VS 2019
-    flight_times,
+    asymp_fraction, # Beta distribution parameters to generate asymptomatic fraction. Replace with vector arg?
     incubation_times,
-    fixed = fixed){
-  # Not sure what fixed does,it gets passed to function make_travellers.
-  # Not sure where the default value for fixed comes from, fixed is not in global scope
+    flight_time,
+    trav_vol = 1000, # Number of travellers per sim
+    syndromic_sensitivity = 0.7
+  ){
+
+  countries <- 'simland'
   
-  inf_arrivals <- as.list(countries) %>%
+  inf_arrivals <- as.list(countries)%>%
     purrr::set_names(., .) %>%
     purrr::map(~prev_vector) %>%
     purrr::map_dfr(.id = "country", ~data.frame(pi = .x)) %>%
-    dplyr::mutate(alpha = rbeta(n = nrow(.),
+    dplyr::mutate(alpha = rbeta(n = trav_vol,
                                 shape1 = asymp_fraction$shape1,
                                 shape2 = asymp_fraction$shape2)) %>%
-    tidyr::nest(data = -c(country)) 
-  if (!fixed){
-    inf_arrivals <- dplyr::inner_join(inf_arrivals,
-                                      dplyr::filter(flight_vols, year == 2020) %>%
-                                        tidyr::gather(country, trav_vol),
-                                      by = "country") %>%
-      dplyr::mutate(trav_vol = ceiling(trav_vol/2))
-  } else {
-    inf_arrivals <- dplyr::mutate(inf_arrivals, trav_vol = trav_vol_manual)
-  }
+    tidyr::nest(data = -c(country))
+  
+  inf_arrivals <- dplyr::mutate(inf_arrivals, trav_vol = trav_vol)
   
   inf_arrivals <-  
     mutate(inf_arrivals,
@@ -1213,8 +1205,8 @@ make_inf_arrivals <-
                                         x = .x,
                                         incubation_times = incubation_times,
                                         trav_vol = .y,
-                                        trav_vol_p = trav_vol_p,
-                                        fixed = fixed))) 
+                                        syndromic_sensitivity = syndromic_sensitivity,
+                                        fixed = FALSE)))
   
   inf_arrivals  <- 
     mutate(inf_arrivals,
@@ -1225,8 +1217,8 @@ make_inf_arrivals <-
   inf_arrivals <- tidyr::unnest(inf_arrivals, individuals)
   
   # add flight duration
-  inf_arrivals <- dplyr::inner_join(inf_arrivals, flight_times)
-  
+  #inf_arrivals <- dplyr::inner_join(inf_arrivals, flight_times)
+  inf_arrivals <- mutate(inf_arrivals, dur_flight = flight_time)
   return(inf_arrivals)
   
 }
@@ -1237,7 +1229,8 @@ make_travellers <- function(x, # contains relevant parameters
                             trav_vol,
                             trav_vol_p = 7/30,
                             xi = NULL,
-                            fixed = TRUE){ # Ignores syndromatic screening if fixed = TRUE
+                            syndromic_sensitivity = 0.7,
+                            fixed = FALSE){ # Ignores syndromatic screening if fixed = TRUE
   
   # incubation_times should be a big data frame
   # trav_vol: should already be scaled
