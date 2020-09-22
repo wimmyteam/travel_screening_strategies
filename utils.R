@@ -62,7 +62,7 @@ type_labels <- c("asymptomatic" =
 
 # parameter for effectiveness of syndromic screening and self-selection
 # see gostic.R and its outputs
-# syndromic_sensitivity <- 0.7
+syndromic_sensitivity <- 0.7
 
 # all scenarios used for modelling
 input <- 
@@ -93,7 +93,8 @@ input <-
   crossing(max_mqp             = 14,
            post_symptom_window =  7,
            results_delay       =  1) %>%
-  mutate(scenario=row_number()) 
+  mutate(scenario=row_number())
+
 
 # scenarios used for analysis
 main_scenarios <-

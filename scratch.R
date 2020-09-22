@@ -66,9 +66,12 @@ results1 <- stage_when_released(arrival_released)
 
 # Call new function that runs a single scenario
 # This one doesn't work yet :P
-results2 <- estimate_infectious_days_per_traveller(
-  prevalence = 0.05,
-  quarentine_days = 3,
-  quarentine_compliance = 0.8,
-  syndromatic_sensitivity = 0.7
+results2 <- run_scenario(
+  prevalence               = 0.05,
+  quarentine_days          = 3,
+  quarentine_compliance    = 1.0,
+  syndromic_sensitivity    = 0.7,
+  n_travellers             = 1000,
+  n_sims                   = 10,
+  flight_time              = 2/24
 )

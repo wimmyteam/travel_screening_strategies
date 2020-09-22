@@ -9,11 +9,11 @@
 source("run_analysis_func.R")
 
 # This function runs a single simulation
-estimate_infectious_days_per_traveller <- function(
+run_scenario <- function(
   prevalence               = 0.05,
   quarentine_days          = 3,
-  quarentine_compliance    = 0.8,
-  syndromatic_sensitivity  = 0.7,
+  quarentine_compliance    = 1.0,
+  syndromic_sensitivity    = 0.7,
   n_travellers             = 1000,
   n_sims                   = 10,
   flight_time              = 2/24
@@ -23,7 +23,7 @@ estimate_infectious_days_per_traveller <- function(
   incubation_times <- make_incubation_times(
     n_travellers = n_travellers,
     pathogen = pathogen, # pathogen created in Utils.R
-    syndromic_sensitivity = syndromatic_sensitivity
+    syndromic_sensitivity = syndromic_sensitivity
   )
 
   prev_vector <- rnorm(n_travellers, prevalence, 0.01) # Ideally we would get distribution from model prediction
@@ -40,13 +40,13 @@ estimate_infectious_days_per_traveller <- function(
   
   input <- 
     tibble(pathogen = "SARS-CoV-2") %>%
-    mutate(syndromic_sensitivity = syndromatic_sensitivity)  %>%
+    mutate(syndromic_sensitivity = syndromic_sensitivity)  %>%
     bind_cols(., list(
       `only` = 
         crossing(pre_board_screening = c(NA),
                  post_flight_screening = c(TRUE),
-                 first_test_delay = quarentine_days,
-                 second_test_delay = NA)) %>%
+                 first_test_delay = 3,
+                 second_test_delay = 0)) %>%
         bind_rows(.id = "stringency")) %>% 
     crossing(max_mqp             = 14,
              post_symptom_window =  7,
