@@ -5,6 +5,7 @@
 source("wimmy_functions.R")
 
 # incubation times
+set.seed(145)
 
 incubation_times <- make_incubation_times(
   n_travellers = 1000,
@@ -16,9 +17,13 @@ incubation_times <- make_incubation_times(
 # This function seems to build "random" symptomatic and asymptomatic "cases"
 
 
+prevalence <- 0.05
+
+prev_vector <- rnorm(1000, prevalence, 0.01)
+
 inf_arrivals <- make_inf_arrivals(
   countries       = c("Peru"),
-  prev_est_region = prev_est_region,
+  prev_vector = prev_vector,
   n_arrival_sims  = 1000,
   asymp_fraction  = asymp_fraction,
   flight_vols     = 1000,
@@ -26,6 +31,7 @@ inf_arrivals <- make_inf_arrivals(
   trav_vol_manual = 2000,
   incubation_times = incubation_times,
   fixed            = TRUE)
+
 
 input <- 
   tibble(pathogen = "SARS-CoV-2") %>%
@@ -51,12 +57,12 @@ arrival_scenarios <- make_arrival_scenarios(
 arrival_released <- when_released(arrival_scenarios)
 
 # Calculate stage of infectiousness when released
-arrival_released_times <- stage_when_released(arrival_released)
+results1 <- stage_when_released(arrival_released)
 
 
 # Call new function that runs a single scenario
 # This one doesn't work yet :P
-new_infections <- estimate_infectious_days_per_traveller(
+results2 <- estimate_infectious_days_per_traveller(
   prevalence = 0.05,
   quarentine_days = 3,
   quarentine_compliance = 0.8,

@@ -861,7 +861,11 @@ make_proportions <- function(prev_est_region,
   
 }
 
+
 # make prevalence estimates for each region
+# This function can combine several countries together into a "region".
+# In the Clifford study for example all the EU countries were combined into a single EU entity
+# When combining countries it uses the mean prevalence weighted by population
 make_prevalence <- function(prev_est_region,
                             origin_country = "United Kingdom",
                             n = 1){
@@ -879,7 +883,7 @@ make_prevalence <- function(prev_est_region,
                                           w = population),
                      .groups = "drop") %$% prev
   
-  
+  return(prev_est_region)
 }
 
 # each traveller needs a random quantile which can be used across all scenarios
@@ -1167,24 +1171,24 @@ make_incubation_times <- function(
 }
 
 # function to make the infectious arrivals given traveller volumes
-make_inf_arrivals <- function(countries,
-                              prev_est_region,
-                              n_arrival_sims,
-                              asymp_fraction,
-                              flight_vols = NULL,
-                              trav_vol_manual = NULL, #Whether number of travellers is set manually or not
-                              trav_vol_p = 1, #Percentage of people flying in 2020 VS 2019
-                              flight_times,
-                              incubation_times,
-                              fixed = fixed){
+make_inf_arrivals <- 
+  function(
+    countries,
+    prev_vector, #vector with prevalence values to use for each simulation(length = n_arrival_sims)
+    n_arrival_sims,
+    asymp_fraction,
+    flight_vols = NULL,
+    trav_vol_manual = NULL, #Whether number of travellers is set manually or not
+    trav_vol_p = 1, #Percentage of people flying in 2020 VS 2019
+    flight_times,
+    incubation_times,
+    fixed = fixed){
   # Not sure what fixed does,it gets passed to function make_travellers.
   # Not sure where the default value for fixed comes from, fixed is not in global scope
   
   inf_arrivals <- as.list(countries) %>%
     purrr::set_names(., .) %>%
-    purrr::map(~make_prevalence(prev_est_region = prev_est_region,
-                                origin_country = .x, 
-                                n = n_arrival_sims)) %>%
+    purrr::map(~prev_vector) %>%
     purrr::map_dfr(.id = "country", ~data.frame(pi = .x)) %>%
     dplyr::mutate(alpha = rbeta(n = nrow(.),
                                 shape1 = asymp_fraction$shape1,
