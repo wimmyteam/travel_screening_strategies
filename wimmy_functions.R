@@ -69,34 +69,36 @@ run_partial_compliance_scenario <- function(
   n_compliant     = round(n_travellers * percent_compliant / 100)
   n_non_compliant = n_travellers - n_compliant
   
-  compliant_strategy <- 
-    tibble(
-      pathogen = "SARS-CoV-2",
-      syndromic_sensitivity  = syndromic_sensitivity,
-      pre_board_screening    = NA,
-      post_flight_screening  = TRUE,
-      first_test_delay       = quarentine_days,
-      second_test_delay      = NA,
-      max_mqp                = 14,
-      post_symptom_window    = 7,
-      results_delay          = 1,
-      scenario               = 1
-    )
+  if(percent_compliant != 0)
+  {
+    compliant_strategy <- 
+      tibble(
+        pathogen = "SARS-CoV-2",
+        syndromic_sensitivity  = syndromic_sensitivity,
+        pre_board_screening    = NA,
+        post_flight_screening  = TRUE,
+        first_test_delay       = quarentine_days,
+        second_test_delay      = NA,
+        max_mqp                = 14,
+        post_symptom_window    = 7,
+        results_delay          = 1,
+        scenario               = 1
+      )
   
-  compliant_result <- run_scenario(
-    strategy                 = compliant_strategy,
-    prev_vector               = prev_vector,
-    syndromic_sensitivity    = syndromic_sensitivity,
-    n_travellers             = n_compliant,
-    n_sims                   = n_sims,
-    flight_time              = flight_time
-  ) %>%
+    compliant_result <- run_scenario(
+      strategy                 = compliant_strategy,
+      prev_vector               = prev_vector,
+      syndromic_sensitivity    = syndromic_sensitivity,
+      n_travellers             = n_compliant,
+      n_sims                   = n_sims,
+      flight_time              = flight_time
+    ) %>%
     mutate(compliant = TRUE)
   
-  if (percent_compliant == 100) {
-    return(compliant_result)
+    if (percent_compliant == 100) {
+      return(compliant_result)
+    }
   }
-  
   non_compliant_strategy <- 
     tibble(
       pathogen = "SARS-CoV-2",
@@ -124,6 +126,11 @@ run_partial_compliance_scenario <- function(
       idx = idx + n_compliant
     )
   
+  if(percent_compliant == 0)
+  {
+    return(non_compliant_result)
+  }
+  
   full_result = bind_rows(compliant_result, non_compliant_result)
   
   return(full_result)
@@ -145,5 +152,21 @@ inf_days_summary <- function(results, n_sims = 1000) {
               median = median(days_released_inf_per_traveller),
               min = min(days_released_inf_per_traveller),
               max = max(days_released_inf_per_traveller)) 
+  return(summary_stats)
+}
+
+
+released_inf_trav_summary <- function(results, n_sims = 1000) {
+  sims = tibble(sim = (1:n_sims))
+  summary_stats <- results %>%
+    filter(stage_released == "Infectious") %>%
+    group_by(sim) %>%
+    summarise(released_infectious_travellers = n()) %>%
+    full_join(y = sims) %>%
+    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
+    summarise(mean = mean(released_infectious_travellers),
+              median = median(released_infectious_travellers),
+              min = min(released_infectious_travellers),
+              max = max(released_infectious_travellers))
   return(summary_stats)
 }

@@ -40,6 +40,16 @@ home_quarentine_results_50 <- run_partial_compliance_scenario(
   percent_compliant        = 50 # percentage
 )
 
+home_quarentine_results_00 <- run_partial_compliance_scenario(
+  prev_vector               = prev_vector,
+  quarentine_days          = 3,
+  syndromic_sensitivity    = syndromic_sensitivity,
+  n_travellers             = 1000,
+  n_sims                   = n_sims,
+  flight_time              = 2/24,
+  percent_compliant        = 0 # percentage
+)
+
 # number of infectious travellers released per week
 # df %>% group_by(group, var1) %>% mutate(count = n())
 sims = tibble(sim = (1:n_sims))
