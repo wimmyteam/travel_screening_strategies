@@ -1,6 +1,6 @@
 source('wimmy_functions.R')
 
-n_sims <- 1000
+n_sims <- 10000
 prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
                            p = c(0.5, 0.975))
 
@@ -18,7 +18,7 @@ managed_quarentine_results <- run_partial_compliance_scenario(
   percent_compliant        = 100 # percentage
 )
 
-home_quarentine_results <- run_partial_compliance_scenario(
+home_quarentine_results_80 <- run_partial_compliance_scenario(
   prev_vector               = prev_vector,
   quarentine_days          = 3,
   syndromic_sensitivity    = syndromic_sensitivity,
@@ -26,6 +26,16 @@ home_quarentine_results <- run_partial_compliance_scenario(
   n_sims                   = n_sims,
   flight_time              = 2/24,
   percent_compliant        = 80 # percentage
+)
+
+home_quarentine_results_50 <- run_partial_compliance_scenario(
+  prev_vector               = prev_vector,
+  quarentine_days          = 3,
+  syndromic_sensitivity    = syndromic_sensitivity,
+  n_travellers             = 1000,
+  n_sims                   = n_sims,
+  flight_time              = 2/24,
+  percent_compliant        = 50 # percentage
 )
 
 # number of infectious travellers released per week
@@ -79,7 +89,7 @@ dat4 <- home_quarentine_results %>%
             trav_vol = first(trav_vol)) %>% 
   mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
   ungroup() %>% 
-  full_join(y = tib1) %>% 
+  full_join(y = sims) %>% 
   mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
   summarise(mean = mean(days_released_inf_per_traveller),
             median = median(days_released_inf_per_traveller),
