@@ -47,6 +47,7 @@ server <- function(input, output) {
   })
   
   output$hist <- renderPlot({hist(data())})
+  
   output$stats <- renderPrint({dataset() %>% 
     filter(stage_released == "Infectious") %>% 
     group_by(sim) %>% 
