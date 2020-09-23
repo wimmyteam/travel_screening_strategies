@@ -18,8 +18,6 @@ managed_quarentine_results <- run_partial_compliance_scenario(
   percent_compliant        = 100 # percentage
 )
 
-# saveRDS(managed_quarentine_results, file="Shiny/managed.RDS")
-
 home_quarentine_results <- run_partial_compliance_scenario(
   prev_vector               = prev_vector,
   quarentine_days          = 3,
@@ -29,8 +27,6 @@ home_quarentine_results <- run_partial_compliance_scenario(
   flight_time              = 2/24,
   percent_compliant        = 80 # percentage
 )
-
-# saveRDS(home_quarentine_results, file="Shiny/home.RDS")
 
 # number of infectious travellers released per week
 # df %>% group_by(group, var1) %>% mutate(count = n())
@@ -64,15 +60,16 @@ dat2 <- managed_quarentine_results %>%
 
 # number of infectious travellers released per week
 
-# dat3 <- home_quarentine_results %>% 
-#   filter(stage_released == "Infectious") %>% 
-#   group_by(sim) %>% 
-#   summarise(released_travellers = n()) %>% 
-#   ungroup() %>% 
-#   summarise(mean = mean(released_travellers),
-#             median = median(released_travellers),
-#             min = min(released_travellers),
-#             max = max(released_travellers))
+dat3 <- home_quarentine_results %>% 
+ filter(stage_released == "Infectious") %>%
+  group_by(sim) %>%
+  summarise(released_infectious_travellers = n()) %>%
+  full_join(y = sims) %>%
+  mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
+  summarise(mean = mean(released_infectious_travellers),
+            median = median(released_infectious_travellers),
+            min = min(released_infectious_travellers),
+            max = max(released_infectious_travellers))
 
 # number of days of infectiousness per released traveller
 dat4 <- home_quarentine_results %>% 
