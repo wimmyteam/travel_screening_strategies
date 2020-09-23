@@ -1,6 +1,7 @@
 source('wimmy_functions.R')
 
-prevalence <- 0.05
+prevalence <- 0.005
+# actual prevalence is closer to 0.005, 95% CI (0.003,0.008)
 syndromic_sensitivity <- 0.7
 
 managed_quarentine_results <- run_partial_compliance_scenario(
@@ -41,8 +42,8 @@ dat2 <- managed_quarentine_results %>%
   filter(stage_released == "Infectious") %>% 
   group_by(sim) %>% 
   summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
-            released_travellers = n()) %>% 
-  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers) %>% 
+            trav_vol = first(trav_vol)) %>% 
+  mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
   ungroup() %>% 
   summarise(mean = mean(days_released_inf_per_traveller),
             median = median(days_released_inf_per_traveller),
@@ -66,8 +67,8 @@ dat4 <- home_quarentine_results %>%
   filter(stage_released == "Infectious") %>% 
   group_by(sim) %>% 
   summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
-            released_travellers = n()) %>% 
-  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers) %>% 
+            trav_vol = first(trav_vol)) %>% 
+  mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
   ungroup() %>% 
   summarise(mean = mean(days_released_inf_per_traveller),
             median = median(days_released_inf_per_traveller),
