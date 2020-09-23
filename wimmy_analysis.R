@@ -42,10 +42,10 @@ dat1 <- managed_quarentine_results %>%
   summarise(released_infectious_travellers = n()) %>%
   full_join(y = sims) %>%
   mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-  summarise(mean = mean(released_travellers),
-            median = median(released_travellers),
-            min = min(released_travellers),
-            max = max(released_travellers))
+  summarise(mean = mean(released_infectious_travellers),
+            median = median(released_infectious_travellers),
+            min = min(released_infectious_travellers),
+            max = max(released_infectious_travellers))
 
 # number of days of infectiousness per released traveller
 dat2 <- managed_quarentine_results %>% 
