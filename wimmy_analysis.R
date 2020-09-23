@@ -51,7 +51,7 @@ dat1 <- managed_quarentine_results %>%
   summarise(mean = mean(released_infectious_travellers),
             median = median(released_infectious_travellers),
             min = min(released_infectious_travellers),
-            max = max(released_infectious_travellers))
+            max = max(released_infectious_travellers)) %>% tibble()
 
 # number of days of infectiousness per released traveller
 dat2 <- managed_quarentine_results %>% 
