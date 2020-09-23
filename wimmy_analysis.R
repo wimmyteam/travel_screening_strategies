@@ -18,8 +18,6 @@ managed_quarentine_results <- run_partial_compliance_scenario(
   percent_compliant        = 100 # percentage
 )
 
-# saveRDS(managed_quarentine_results, file="Shiny/managed.RDS")
-
 home_quarentine_results <- run_partial_compliance_scenario(
   prev_vector               = prev_vector,
   quarentine_days          = 3,
@@ -29,8 +27,6 @@ home_quarentine_results <- run_partial_compliance_scenario(
   flight_time              = 2/24,
   percent_compliant        = 80 # percentage
 )
-
-# saveRDS(home_quarentine_results, file="Shiny/home.RDS")
 
 # number of infectious travellers released per week
 # df %>% group_by(group, var1) %>% mutate(count = n())
@@ -65,7 +61,7 @@ dat2 <- managed_quarentine_results %>%
 # number of infectious travellers released per week
 
 dat3 <- home_quarentine_results %>% 
-filter(stage_released == "Infectious") %>%
+ filter(stage_released == "Infectious") %>%
   group_by(sim) %>%
   summarise(released_infectious_travellers = n()) %>%
   full_join(y = sims) %>%
