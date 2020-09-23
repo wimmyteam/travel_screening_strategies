@@ -1,5 +1,4 @@
 library(shiny)
-source('wimmy_functions.R')
 
 # Define UI for application t
 ui <- fluidPage(
@@ -22,7 +21,9 @@ ui <- fluidPage(
                                 min = 0, max = 100, value = 100),
                     sliderInput(inputId = "quarentine_compliance2",
                                 label = "compliance (Home quarantine)",
-                                min = 0, max = 100, value = 80))),column(1),
+                                min = 0, max = 100, value = 80),
+                    actionButton(inputId = "go",
+                                 label = "run simulation"))),column(1),
            column(6, div(img(src = "kucirka_plot.png", 
                              width="600", 
                              height="350"), style="text-align: center;"),
@@ -41,25 +42,9 @@ ui <- fluidPage(
 # Define server logic required 
 server <- function(input, output) {
   
-  managed_quarentine_results <- reactive({run_partial_compliance_scenario(
-    prev_vector               = prev_vector,
-    quarentine_days          = input$quarentine_days,
-    syndromic_sensitivity    = input$syndromic_sensitivity,
-    n_travellers             = 1000,
-    n_sims                   = n_sims,
-    flight_time              = 2/24,
-    percent_compliant        = input$quarentine_compliance1 # percentage
-  )})
+  managed_quarentine_results <- reactive({readRDS("data/managed.rds")})
   
-  home_quarentine_results <- reactive({run_partial_compliance_scenario(
-    prev_vector               = prev_vector,
-    quarentine_days          = input$quarentine_days,
-    syndromic_sensitivity    = input$syndromic_sensitivity,
-    n_travellers             = 1000,
-    n_sims                   = n_sims,
-    flight_time              = 2/24,
-    percent_compliant        = input$quarentine_compliance2
-  )})
+  home_quarentine_results <- reactive({readRDS("data/home.rds")})
   
   output$stats1 <- renderPrint({managed_quarentine_results() %>%
     filter(stage_released == "Infectious") %>%
@@ -70,8 +55,8 @@ server <- function(input, output) {
     summarise(mean = mean(released_infectious_travellers),
               median = median(released_infectious_travellers),
               min = min(released_infectious_travellers),
-              max = max(released_infectious_travellers))})
-  
+              max = max(released_infectious_travellers)) %>% tibble
+    })
   output$stats2 <- renderPrint({managed_quarentine_results() %>% 
       mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
       group_by(sim) %>% 
@@ -84,7 +69,8 @@ server <- function(input, output) {
       summarise(mean = mean(days_released_inf_per_traveller),
                 median = median(days_released_inf_per_traveller),
                 min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller))})
+                max = max(days_released_inf_per_traveller)) %>% tibble
+    })
   output$stats3 <- renderPrint({home_quarentine_results() %>% 
       filter(stage_released == "Infectious") %>%
       group_by(sim) %>%
@@ -94,7 +80,8 @@ server <- function(input, output) {
       summarise(mean = mean(released_infectious_travellers),
                 median = median(released_infectious_travellers),
                 min = min(released_infectious_travellers),
-                max = max(released_infectious_travellers))})
+                max = max(released_infectious_travellers)) %>% tibble
+    })
   output$stats4 <- renderPrint({home_quarentine_results() %>% 
       mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
       group_by(sim) %>% 
@@ -107,7 +94,7 @@ server <- function(input, output) {
       summarise(mean = mean(days_released_inf_per_traveller),
                 median = median(days_released_inf_per_traveller),
                 min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller))
+                max = max(days_released_inf_per_traveller)) %>% tibble
   })
 }
 
