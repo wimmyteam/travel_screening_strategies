@@ -31,10 +31,14 @@ ui <- fluidPage(
            The mean fit is used as the time-varying sensitivity function, P(t), and hence no uncertainty is shown in the figure."))),
   fluidRow(
     column(6, tags$h4("Managed Quarantine"),
+           h6("Number of infectious travellers released per 1000 travellers"),
            verbatimTextOutput(outputId = "stats1"),
+           h6("Number of infectious days per 1000 travellers"),
            verbatimTextOutput(outputId = "stats2")),
     column(6, tags$h4("Home Quarantine"),
+           h6("Number of infectious travellers released per 1000 travellers"),
            verbatimTextOutput(outputId = "stats3"),
+           h6("Number of infectious days per 1000 travellers"),
            verbatimTextOutput(outputId = "stats4"))
   )
 )
@@ -55,7 +59,7 @@ server <- function(input, output) {
     summarise(mean = mean(released_infectious_travellers),
               median = median(released_infectious_travellers),
               min = min(released_infectious_travellers),
-              max = max(released_infectious_travellers)) %>% tibble
+              max = max(released_infectious_travellers)) 
     })
   output$stats2 <- renderPrint({managed_quarentine_results() %>% 
       mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
@@ -69,7 +73,7 @@ server <- function(input, output) {
       summarise(mean = mean(days_released_inf_per_traveller),
                 median = median(days_released_inf_per_traveller),
                 min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller)) %>% tibble
+                max = max(days_released_inf_per_traveller)) 
     })
   output$stats3 <- renderPrint({home_quarentine_results() %>% 
       filter(stage_released == "Infectious") %>%
@@ -80,7 +84,7 @@ server <- function(input, output) {
       summarise(mean = mean(released_infectious_travellers),
                 median = median(released_infectious_travellers),
                 min = min(released_infectious_travellers),
-                max = max(released_infectious_travellers)) %>% tibble
+                max = max(released_infectious_travellers)) 
     })
   output$stats4 <- renderPrint({home_quarentine_results() %>% 
       mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
@@ -94,7 +98,7 @@ server <- function(input, output) {
       summarise(mean = mean(days_released_inf_per_traveller),
                 median = median(days_released_inf_per_traveller),
                 min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller)) %>% tibble
+                max = max(days_released_inf_per_traveller)) 
   })
 }
 
