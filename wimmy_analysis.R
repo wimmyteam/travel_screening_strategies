@@ -10,13 +10,15 @@ syndromic_sensitivity <- 0.7
 
 managed_quarentine_results <- run_partial_compliance_scenario(
   prev_vector               = prev_vector,
-  quarentine_days          = 3,
+  quarentine_days          = 9,
   syndromic_sensitivity    = syndromic_sensitivity,
   n_travellers             = 1000,
   n_sims                   = n_sims,
   flight_time              = 2/24,
   percent_compliant        = 100 # percentage
-)
+) %>% mutate(syndromic_sensitivity = syndromic_sensitivity,
+             quarentine_days = 9,
+             percent_compliant = 100)
 
 home_quarentine_results_80 <- run_partial_compliance_scenario(
   prev_vector               = prev_vector,
@@ -96,7 +98,7 @@ dat4 <- home_quarentine_results %>%
             min = min(days_released_inf_per_traveller),
             max = max(days_released_inf_per_traveller))
 
-inf_days_summary <- function(results, n_sims = 1000) {
+inf_days_summary <- function(results, n_sims = 10000) {
   sims = tibble(sim = (1:n_sims))
   summary_stats <- results %>% 
     mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
@@ -114,7 +116,7 @@ inf_days_summary <- function(results, n_sims = 1000) {
   return(summary_stats)
 }
 
-released_inf_trav_summary(results, n_sims = 1000) {
+released_inf_trav_summary <- function(results, n_sims = 10000) {
   sims = tibble(sim = (1:n_sims))
   summary_stats <- results %>%
     filter(stage_released == "Infectious") %>%

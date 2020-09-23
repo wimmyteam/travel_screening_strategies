@@ -1,4 +1,8 @@
 library(shiny)
+library(tidyverse)
+
+source("functions/analysis.R")
+n_sims = 10000
 
 # Define UI for application t
 ui <- fluidPage(
@@ -12,16 +16,13 @@ ui <- fluidPage(
                   wellPanel(
                     sliderInput(inputId = "syndromic_sensitivity",
                                 label = "syndromic sensitivity",
-                                min = 0, max = 1, value = 0.7),
+                                min = 0.3, max = 0.7, value = 0.7, step = 0.2),
                     sliderInput(inputId = "quarentine_days",
                                 label = "number of days in quarantine",
-                                min = 0, max = 14, value = 3),
-                    sliderInput(inputId = "quarentine_compliance1",
-                                label = "compliance (Managed quarantine)",
-                                min = 0, max = 100, value = 100),
-                    sliderInput(inputId = "quarentine_compliance2",
+                                min = 0, max = 12, value = 3, step = 3),
+                    sliderInput(inputId = "percent_compliant",
                                 label = "compliance (Home quarantine)",
-                                min = 0, max = 100, value = 80),
+                                min = 0, max = 100, value = 80, step = 20),
                     actionButton(inputId = "go",
                                  label = "run simulation"))),column(1),
            column(6, div(img(src = "kucirka_plot.png", 
@@ -46,59 +47,31 @@ ui <- fluidPage(
 # Define server logic required 
 server <- function(input, output) {
   
-  managed_quarentine_results <- reactive({readRDS("data/managed.rds")})
+  managed_quarentine_results <- eventReactive(input$go, {read_rds("data/managed.RDS") #%>% 
+      #filter(syndromic_sensitivity == input$syndromic_sensitivity,
+      #       quarentine_days == input$quarentine_days)
+    })
   
-  home_quarentine_results <- reactive({readRDS("data/home.rds")})
+  home_quarentine_results <- eventReactive(input$go, {readRDS("data/home.RDS") #%>% 
+     #filter(syndromic_sensitivity == input$syndromic_sensitivity,
+     #        quarentine_days == input$quarentine_days,
+     #        percent_compliant == input$percent_compliant)
+    })
   
-  output$stats1 <- renderPrint({managed_quarentine_results() %>%
-    filter(stage_released == "Infectious") %>%
-    group_by(sim) %>%
-    summarise(released_infectious_travellers = n()) %>%
-    full_join(y = sims) %>%
-    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-    summarise(mean = mean(released_infectious_travellers),
-              median = median(released_infectious_travellers),
-              min = min(released_infectious_travellers),
-              max = max(released_infectious_travellers)) 
+  output$stats1 <- renderPrint({
+    released_inf_trav_summary(managed_quarentine_results(), n_sims = n_sims)
     })
-  output$stats2 <- renderPrint({managed_quarentine_results() %>% 
-      mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-      group_by(sim) %>% 
-      summarise(sum_days_released_inf = sum(days_released_inf),
-                trav_vol = first(trav_vol)) %>% 
-      mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-      ungroup() %>% 
-      full_join(y = sims) %>% 
-      mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-      summarise(mean = mean(days_released_inf_per_traveller),
-                median = median(days_released_inf_per_traveller),
-                min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller)) 
+  
+  output$stats2 <- renderPrint({
+    inf_days_summary(managed_quarentine_results(), n_sims = n_sims)
     })
-  output$stats3 <- renderPrint({home_quarentine_results() %>% 
-      filter(stage_released == "Infectious") %>%
-      group_by(sim) %>%
-      summarise(released_infectious_travellers = n()) %>%
-      full_join(y = sims) %>%
-      mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-      summarise(mean = mean(released_infectious_travellers),
-                median = median(released_infectious_travellers),
-                min = min(released_infectious_travellers),
-                max = max(released_infectious_travellers)) 
+  
+  output$stats3 <- renderPrint({
+    released_inf_trav_summary(home_quarentine_results(), n_sims = n_sims)
     })
-  output$stats4 <- renderPrint({home_quarentine_results() %>% 
-      mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-      group_by(sim) %>% 
-      summarise(sum_days_released_inf = sum(days_released_inf),
-                trav_vol = first(trav_vol)) %>% 
-      mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-      ungroup() %>% 
-      full_join(y = tib1) %>% 
-      mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-      summarise(mean = mean(days_released_inf_per_traveller),
-                median = median(days_released_inf_per_traveller),
-                min = min(days_released_inf_per_traveller),
-                max = max(days_released_inf_per_traveller)) 
+  
+  output$stats4 <- renderPrint({
+    inf_days_summary(home_quarentine_results(), n_sims = n_sims)
   })
 }
 
