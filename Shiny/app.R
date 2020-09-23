@@ -41,8 +41,24 @@ ui <- fluidPage(
 # Define server logic required 
 server <- function(input, output) {
   data <- reactive({rnorm(input$num)})
+  
+  dataset <- dataset <- reactive({
+    get(load("managed.RDS"))
+  })
+  
   output$hist <- renderPlot({hist(data())})
-  output$stats <- renderPrint({summary(data())})
+  
+  output$stats <- renderPrint({dataset() %>% 
+    filter(stage_released == "Infectious") %>% 
+    group_by(sim) %>% 
+    summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
+              trav_vol = first(trav_vol)) %>% 
+    mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
+    ungroup() %>% 
+    summarise(mean = mean(days_released_inf_per_traveller),
+              median = median(days_released_inf_per_traveller),
+              min = min(days_released_inf_per_traveller),
+              max = max(days_released_inf_per_traveller))})
 }
 
 # Run the application 
