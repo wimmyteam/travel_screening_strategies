@@ -30,14 +30,17 @@ home_quarentine_results <- run_partial_compliance_scenario(
 )
 
 # number of infectious travellers released per week
+# df %>% group_by(group, var1) %>% mutate(count = n())
+sims = tibble(sim = (1:1000))
+dat0 <- managed_quarentine_results %>%
+  filter(stage_released == "Infectious") %>%
+  group_by(sim) %>%
+  mutate(released_infectious_travellers = n()) %>%
+  select(sim, released_infectious_travellers)
+
 
 dat1 <- managed_quarentine_results %>% 
   #filter(stage_released == "Infectious") %>% 
-  group_by(sim, stage_released) %>% 
-  summarise(released_travellers = n()) %>% 
-  ungroup() %>%
-  filter(stage_released == "Infectious") %>%
-  right_join(managed_quarentine_results, by='sim') %>%
   summarise(mean = mean(released_travellers),
             median = median(released_travellers),
             min = min(released_travellers),
