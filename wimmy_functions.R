@@ -147,3 +147,19 @@ inf_days_summary <- function(results, n_sims = 1000) {
               max = max(days_released_inf_per_traveller)) 
   return(summary_stats)
 }
+
+
+released_inf_trav_summary <- function(results, n_sims = 1000) {
+  sims = tibble(sim = (1:n_sims))
+  summary_stats <- results %>%
+    filter(stage_released == "Infectious") %>%
+    group_by(sim) %>%
+    summarise(released_infectious_travellers = n()) %>%
+    full_join(y = sims) %>%
+    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
+    summarise(mean = mean(released_infectious_travellers),
+              median = median(released_infectious_travellers),
+              min = min(released_infectious_travellers),
+              max = max(released_infectious_travellers))
+  return(summary_stats)
+}

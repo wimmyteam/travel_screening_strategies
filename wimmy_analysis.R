@@ -114,7 +114,7 @@ inf_days_summary <- function(results, n_sims = 1000) {
   return(summary_stats)
 }
 
-released_inf_trav_summary(results, n_sims = 1000) {
+released_inf_trav_summary <- function(results, n_sims = 1000) {
   sims = tibble(sim = (1:n_sims))
   summary_stats <- results %>%
     filter(stage_released == "Infectious") %>%
