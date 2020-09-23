@@ -128,3 +128,22 @@ run_partial_compliance_scenario <- function(
   
   return(full_result)
 }
+
+
+inf_days_summary <- function(results, n_sims = 1000) {
+  sims = tibble(sim = (1:n_sims))
+  summary_stats <- results %>% 
+    mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
+    group_by(sim) %>% 
+    summarise(sum_days_released_inf = sum(days_released_inf),
+              trav_vol = first(trav_vol)) %>% 
+    mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
+    ungroup() %>% 
+    full_join(y = sims) %>% 
+    mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
+    summarise(mean = mean(days_released_inf_per_traveller),
+              median = median(days_released_inf_per_traveller),
+              min = min(days_released_inf_per_traveller),
+              max = max(days_released_inf_per_traveller)) 
+  return(summary_stats)
+}
