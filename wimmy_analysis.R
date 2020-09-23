@@ -24,19 +24,52 @@ home_quarentine_results <- run_partial_compliance_scenario(
   percent_compliant        = 80 # percentage
 )
 
+# number of infectious travellers released per week
 
 dat1 <- managed_quarentine_results %>% 
+  filter(stage_released == "Infectious") %>% 
   group_by(sim) %>% 
-  summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
-            trav_vol = first(trav_vol),
-            prevented_boarding = sum(is.na(released_t)),
-            released_travellers = trav_vol - prevented_boarding) %>% 
-  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers)
+  summarise(released_travellers = n()) %>% 
+  ungroup() %>% 
+  summarise(mean = mean(released_travellers),
+            median = median(released_travellers),
+            min = min(released_travellers),
+            max = max(released_travellers))
 
-dat2 <- home_quarentine_results %>% 
+# number of days of infectiousness per released traveller
+dat2 <- managed_quarentine_results %>% 
+  filter(stage_released == "Infectious") %>% 
   group_by(sim) %>% 
   summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
-            trav_vol = first(trav_vol),
-            prevented_boarding = sum(is.na(released_t)),
-            released_travellers = trav_vol - prevented_boarding) %>% 
-  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers)
+            released_travellers = n()) %>% 
+  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers) %>% 
+  ungroup() %>% 
+  summarise(mean = mean(days_released_inf_per_traveller),
+            median = median(days_released_inf_per_traveller),
+            min = min(days_released_inf_per_traveller),
+            max = max(days_released_inf_per_traveller))
+
+# number of infectious travellers released per week
+
+dat3 <- home_quarentine_results %>% 
+  filter(stage_released == "Infectious") %>% 
+  group_by(sim) %>% 
+  summarise(released_travellers = n()) %>% 
+  ungroup() %>% 
+  summarise(mean = mean(released_travellers),
+            median = median(released_travellers),
+            min = min(released_travellers),
+            max = max(released_travellers))
+
+# number of days of infectiousness per released traveller
+dat4 <- home_quarentine_results %>% 
+  filter(stage_released == "Infectious") %>% 
+  group_by(sim) %>% 
+  summarise(sum_days_released_inf = sum(days_released_inf, na.rm = T),
+            released_travellers = n()) %>% 
+  mutate(days_released_inf_per_traveller = sum_days_released_inf/released_travellers) %>% 
+  ungroup() %>% 
+  summarise(mean = mean(days_released_inf_per_traveller),
+            median = median(days_released_inf_per_traveller),
+            min = min(days_released_inf_per_traveller),
+            max = max(days_released_inf_per_traveller))
