@@ -1,26 +1,30 @@
 source('wimmy_functions.R')
 
-prevalence <- 0.005
-# actual prevalence is closer to 0.005, 95% CI (0.003,0.008)
+n_sims <- 1000
+prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
+                           p = c(0.5, 0.975))
+
+prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
+
 syndromic_sensitivity <- 0.7
 
 managed_quarentine_results <- run_partial_compliance_scenario(
-  prevalence               = prevalence,
+  prev_vector               = prev_vector,
   quarentine_days          = 3,
   syndromic_sensitivity    = syndromic_sensitivity,
   n_travellers             = 1000,
-  n_sims                   = 1000,
+  n_sims                   = n_sims,
   flight_time              = 2/24,
   percent_compliant        = 100 # percentage
 )
 
 
 home_quarentine_results <- run_partial_compliance_scenario(
-  prevalence               = prevalence,
+  prev_vector               = prev_vector,
   quarentine_days          = 3,
   syndromic_sensitivity    = syndromic_sensitivity,
   n_travellers             = 1000,
-  n_sims                   = 1000,
+  n_sims                   = n_sims,
   flight_time              = 2/24,
   percent_compliant        = 80 # percentage
 )
@@ -28,10 +32,12 @@ home_quarentine_results <- run_partial_compliance_scenario(
 # number of infectious travellers released per week
 
 dat1 <- managed_quarentine_results %>% 
-  filter(stage_released == "Infectious") %>% 
-  group_by(sim) %>% 
+  #filter(stage_released == "Infectious") %>% 
+  group_by(sim, stage_released) %>% 
   summarise(released_travellers = n()) %>% 
-  ungroup() %>% 
+  ungroup() %>%
+  filter(stage_released == "Infectious") %>%
+  right_join(managed_quarentine_results, by='sim') %>%
   summarise(mean = mean(released_travellers),
             median = median(released_travellers),
             min = min(released_travellers),

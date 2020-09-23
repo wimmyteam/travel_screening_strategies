@@ -11,7 +11,7 @@ source("run_analysis_func.R")
 # This function runs a single simulation
 run_scenario <- function(
   strategy,
-  prevalence               = 0.05,
+  prev_vector,
   syndromic_sensitivity    = 0.7,
   n_travellers             = 1000,
   n_sims                   = 10,
@@ -27,8 +27,7 @@ run_scenario <- function(
     pathogen = pathogen, # pathogen created in Utils.R
     syndromic_sensitivity = syndromic_sensitivity
   )
-
-  prev_vector <- rnorm(n_sims, prevalence, 0.01) # Ideally we would get distribution from model prediction
+  # Ideally we would get distribution from model prediction
   
   inf_arrivals <- make_inf_arrivals(
     prev_vector     = prev_vector,
@@ -58,7 +57,7 @@ run_scenario <- function(
 }
 
 run_partial_compliance_scenario <- function(
-  prevalence               = 0.05,
+  prev_vector,
   quarentine_days          = 3,
   syndromic_sensitivity    = 0.7,
   n_travellers             = 1000,
@@ -86,7 +85,7 @@ run_partial_compliance_scenario <- function(
   
   compliant_result <- run_scenario(
     strategy                 = compliant_strategy,
-    prevalence               = prevalence,
+    prev_vector               = prev_vector,
     syndromic_sensitivity    = syndromic_sensitivity,
     n_travellers             = n_compliant,
     n_sims                   = n_sims,
@@ -114,7 +113,7 @@ run_partial_compliance_scenario <- function(
   
   non_compliant_result <-  run_scenario(
     strategy                 = non_compliant_strategy,
-    prevalence               = prevalence,
+    prev_vector               = prev_vector,
     syndromic_sensitivity    = syndromic_sensitivity,
     n_travellers             = n_non_compliant,
     n_sims                   = n_sims,
