@@ -9,12 +9,20 @@ inf_days_summary <- function(results, n_sims = 10000) {
     mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
     ungroup() %>% 
     full_join(y = sims) %>% 
-    mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-    summarise(mean = mean(days_released_inf_per_traveller),
-              median = median(days_released_inf_per_traveller),
-              min = min(days_released_inf_per_traveller),
-              max = max(days_released_inf_per_traveller)) 
+    mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 
+                                                     0, days_released_inf_per_traveller)) 
+  
   return(summary_stats)
+}
+
+plot_hist1 <- function(dat, scenario_means){
+  dat %>% 
+    ggplot(aes(x = days_released_inf_per_traveller, fill = Scenario))+
+    geom_histogram(alpha=0.2, position = 'identity') +
+    geom_vline(data = scenario_means, aes(xintercept = xvalue, color = Scenario), size =1)+
+    scale_y_log10(oob = scales::squish_infinite)+
+    theme_bw()+
+    labs(x = "Number of infectious days")
 }
 
 released_inf_trav_summary <- function(results, n_sims = 10000) {
@@ -24,10 +32,17 @@ released_inf_trav_summary <- function(results, n_sims = 10000) {
     group_by(sim) %>%
     summarise(released_infectious_travellers = n()) %>%
     full_join(y = sims) %>%
-    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-    summarise(mean = mean(released_infectious_travellers),
-              median = median(released_infectious_travellers),
-              min = min(released_infectious_travellers),
-              max = max(released_infectious_travellers))
+    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 
+                                                   0, released_infectious_travellers)) %>% 
+    ggplot(aes(released_infectious_travellers))+
+    geom_histogram()+
+    labs(x = "Number of infectious travellers released")+
+    geom_vline(aes(xintercept = mean(released_infectious_travellers)), 
+               color = "red",
+               size=1)+
+    theme_bw()+
+    scale_y_log10()
+    
   return(summary_stats)
 }
+
