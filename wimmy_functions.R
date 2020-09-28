@@ -177,3 +177,5 @@ released_inf_trav_summary <- function(results, n_sims = 1000) {
               max = max(released_infectious_travellers))
   return(summary_stats)
 }
+
+
