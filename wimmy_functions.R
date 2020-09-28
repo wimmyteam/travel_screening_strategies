@@ -19,7 +19,7 @@ run_scenario <- function(
 )
 {
   set.seed(145)
-  
+
   input <- strategy
   
   incubation_times <- make_incubation_times(
@@ -58,7 +58,7 @@ run_scenario <- function(
 
 run_partial_compliance_scenario <- function(
   prev_vector,
-  quarentine_days          = 3,
+  quarantine_days          = 3,
   syndromic_sensitivity    = 0.7,
   n_travellers             = 1000,
   n_sims                   = 10,
@@ -77,7 +77,7 @@ run_partial_compliance_scenario <- function(
         syndromic_sensitivity  = syndromic_sensitivity,
         pre_board_screening    = NA,
         post_flight_screening  = TRUE,
-        first_test_delay       = quarentine_days,
+        first_test_delay       = quarantine_days,
         second_test_delay      = NA,
         max_mqp                = 14,
         post_symptom_window    = 7,
@@ -87,44 +87,50 @@ run_partial_compliance_scenario <- function(
   
     compliant_result <- run_scenario(
       strategy                 = compliant_strategy,
-      prev_vector               = prev_vector,
+      prev_vector              = prev_vector,
       syndromic_sensitivity    = syndromic_sensitivity,
       n_travellers             = n_compliant,
       n_sims                   = n_sims,
       flight_time              = flight_time
     ) %>%
     mutate(compliant = TRUE)
-  
-    if (percent_compliant == 100) {
+
+    if(percent_compliant == 100)
+    {
       return(compliant_result)
-    }
+    }  
   }
-  non_compliant_strategy <- 
-    tibble(
-      pathogen = "SARS-CoV-2",
-      syndromic_sensitivity  = syndromic_sensitivity,
-      pre_board_screening    = NA,
-      post_flight_screening  = TRUE,
-      first_test_delay       = 0,
-      second_test_delay      = NA,
-      max_mqp                = 14,
-      post_symptom_window    = 7,
-      results_delay          = 1,
-      scenario               = 1
-    )
+
   
-  non_compliant_result <-  run_scenario(
-    strategy                 = non_compliant_strategy,
-    prev_vector               = prev_vector,
-    syndromic_sensitivity    = syndromic_sensitivity,
-    n_travellers             = n_non_compliant,
-    n_sims                   = n_sims,
-    flight_time              = flight_time
-  ) %>%
+  if (percent_compliant != 100)
+  {
+    non_compliant_strategy <- 
+      tibble(
+        pathogen = "SARS-CoV-2",
+        syndromic_sensitivity  = syndromic_sensitivity,
+        pre_board_screening    = NA,
+        post_flight_screening  = TRUE,
+        first_test_delay       = 0,
+        second_test_delay      = NA,
+        max_mqp                = 14,
+        post_symptom_window    = 7,
+        results_delay          = 1,
+        scenario               = 1
+      )
+    
+    non_compliant_result <- run_scenario(
+      strategy                 = non_compliant_strategy,
+      prev_vector              = prev_vector,
+      syndromic_sensitivity    = syndromic_sensitivity,
+      n_travellers             = n_non_compliant,
+      n_sims                   = n_sims,
+      flight_time              = flight_time
+    ) %>%
     mutate(
       compliant = FALSE,
       idx = idx + n_compliant
     )
+  }
   
   if(percent_compliant == 0)
   {
@@ -157,6 +163,7 @@ inf_days_summary <- function(results, n_sims = 1000) {
 
 
 released_inf_trav_summary <- function(results, n_sims = 1000) {
+  # Should we also show this "per thousand travellers" ?
   sims = tibble(sim = (1:n_sims))
   summary_stats <- results %>%
     filter(stage_released == "Infectious") %>%

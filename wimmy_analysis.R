@@ -1,142 +1,86 @@
 source('wimmy_functions.R')
 
 n_sims <- 10000
+n_travellers <- 1000
+flight_time <- 2/24
+
 prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
                            p = c(0.5, 0.975))
 
 prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
 
-syndromic_sensitivity <- 0.7
-
-managed_quarentine_results <- run_partial_compliance_scenario(
-  prev_vector               = prev_vector,
-  quarentine_days          = 9,
-  syndromic_sensitivity    = syndromic_sensitivity,
-  n_travellers             = 1000,
-  n_sims                   = n_sims,
-  flight_time              = 2/24,
-  percent_compliant        = 100 # percentage
-) %>% mutate(syndromic_sensitivity = syndromic_sensitivity,
-             quarentine_days = 9,
-             percent_compliant = 100)
-
-home_quarentine_results_80 <- run_partial_compliance_scenario(
-  prev_vector               = prev_vector,
-  quarentine_days          = 3,
-  syndromic_sensitivity    = syndromic_sensitivity,
-  n_travellers             = 1000,
-  n_sims                   = n_sims,
-  flight_time              = 2/24,
-  percent_compliant        = 80 # percentage
+slider_options <- list(
+  syndromic_sensitivity = c(0.7),
+  quarantine_days = c(0:10),
+  percent_compliant = c(0, 20, 40, 60 ,80, 100)
 )
 
-home_quarentine_results_50 <- run_partial_compliance_scenario(
-  prev_vector               = prev_vector,
-  quarentine_days          = 3,
-  syndromic_sensitivity    = syndromic_sensitivity,
-  n_travellers             = 1000,
-  n_sims                   = n_sims,
-  flight_time              = 2/24,
-  percent_compliant        = 50 # percentage
-)
+option_combinations <- cross_df(slider_options)
 
-home_quarentine_results_00 <- run_partial_compliance_scenario(
-  prev_vector               = prev_vector,
-  quarentine_days          = 3,
-  syndromic_sensitivity    = syndromic_sensitivity,
-  n_travellers             = 1000,
-  n_sims                   = n_sims,
-  flight_time              = 2/24,
-  percent_compliant        = 0 # percentage
-)
+for (i in 1:nrow(option_combinations)) {
 
-# number of infectious travellers released per week
-# df %>% group_by(group, var1) %>% mutate(count = n())
-sims = tibble(sim = (1:n_sims))
+  print(paste("progress: ", i, " out of ", nrow(option_combinations)))
 
-dat1 <- managed_quarentine_results %>%
-  filter(stage_released == "Infectious") %>%
-  group_by(sim) %>%
-  summarise(released_infectious_travellers = n()) %>%
-  full_join(y = sims) %>%
-  mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-  summarise(mean = mean(released_infectious_travellers),
-            median = median(released_infectious_travellers),
-            min = min(released_infectious_travellers),
-            max = max(released_infectious_travellers)) %>% tibble()
+  row <- option_combinations[i,]
 
-# number of days of infectiousness per released traveller
-dat2 <- managed_quarentine_results %>% 
-  mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-  group_by(sim) %>% 
-  summarise(sum_days_released_inf = sum(days_released_inf),
-            trav_vol = first(trav_vol)) %>% 
-  mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-  ungroup() %>% 
-  full_join(y = sims) %>% 
-  mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-  summarise(mean = mean(days_released_inf_per_traveller),
-            median = median(days_released_inf_per_traveller),
-            min = min(days_released_inf_per_traveller),
-            max = max(days_released_inf_per_traveller))
-
-# number of infectious travellers released per week
-
-dat3 <- home_quarentine_results %>% 
- filter(stage_released == "Infectious") %>%
-  group_by(sim) %>%
-  summarise(released_infectious_travellers = n()) %>%
-  full_join(y = sims) %>%
-  mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-  summarise(mean = mean(released_infectious_travellers),
-            median = median(released_infectious_travellers),
-            min = min(released_infectious_travellers),
-            max = max(released_infectious_travellers))
-
-# number of days of infectiousness per released traveller
-dat4 <- home_quarentine_results %>% 
-  mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-  group_by(sim) %>% 
-  summarise(sum_days_released_inf = sum(days_released_inf),
-            trav_vol = first(trav_vol)) %>% 
-  mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-  ungroup() %>% 
-  full_join(y = sims) %>% 
-  mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-  summarise(mean = mean(days_released_inf_per_traveller),
-            median = median(days_released_inf_per_traveller),
-            min = min(days_released_inf_per_traveller),
-            max = max(days_released_inf_per_traveller))
-
-inf_days_summary <- function(results, n_sims = 10000) {
-  sims = tibble(sim = (1:n_sims))
-  summary_stats <- results %>% 
-    mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-    group_by(sim) %>% 
-    summarise(sum_days_released_inf = sum(days_released_inf),
-              trav_vol = first(trav_vol)) %>% 
-    mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-    ungroup() %>% 
-    full_join(y = sims) %>% 
-    mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller)) %>% 
-    summarise(mean = mean(days_released_inf_per_traveller),
-              median = median(days_released_inf_per_traveller),
-              min = min(days_released_inf_per_traveller),
-              max = max(days_released_inf_per_traveller)) 
-  return(summary_stats)
+  result <- run_partial_compliance_scenario(
+      prev_vector              = prev_vector,
+      quarantine_days          = row$quarantine_days,
+      syndromic_sensitivity    = row$syndromic_sensitivity,
+      n_travellers             = n_travellers,
+      n_sims                   = n_sims,
+      flight_time              = flight_time,
+      percent_compliant        = row$percent_compliant
+    )
+  result <- result %>%
+    select(sim, idx, type, released_test, released_t, days_released_inf, trav_vol, stage_released, pre_board_screening, first_test_delay, syndromic_sensitivity) %>%
+    mutate(
+      quarantine_days = row$quarantine_days,
+      percent_compliant = row$percent_compliant
+    )
+  
+  if (i == 1){
+    combined_results <- result
+  }
+  else
+    combined_results <- rbind(combined_results, result)
 }
 
-released_inf_trav_summary <- function(results, n_sims = 10000) {
-  sims = tibble(sim = (1:n_sims))
-  summary_stats <- results %>%
-    filter(stage_released == "Infectious") %>%
-    group_by(sim) %>%
-    summarise(released_infectious_travellers = n()) %>%
-    full_join(y = sims) %>%
-    mutate(released_infectious_travellers = ifelse(is.na(released_infectious_travellers), 0, released_infectious_travellers)) %>%
-    summarise(mean = mean(released_infectious_travellers),
-              median = median(released_infectious_travellers),
-              min = min(released_infectious_travellers),
-              max = max(released_infectious_travellers))
-  return(summary_stats)
-}
+saveRDS(combined_results, 'Shiny/data/simulation_results.rds')
+
+baseline_strategy <- 
+  tibble(
+    pathogen = "SARS-CoV-2",
+    syndromic_sensitivity  = 0.7,
+    pre_board_screening    = NA,
+    post_flight_screening  = NA,
+    first_test_delay       = NA,
+    second_test_delay      = NA,
+    max_mqp                = 14,
+    post_symptom_window    = 7,
+    results_delay          = 1,
+    scenario               = 1
+  )
+
+baseline_results <- run_scenario(
+  strategy = baseline_strategy,
+  prev_vector,
+  syndromic_sensitivity    = 0.7,
+  n_travellers             = n_travellers,
+  n_sims                   = n_sims,
+  flight_time              = flight_time
+)
+
+saveRDS(baseline_results, 'Shiny/data/baseline_results.rds')
+
+#managed_quarantine_results <- run_partial_compliance_scenario(
+#  prev_vector               = prev_vector,
+#  quarantine_days          = 9,
+#  syndromic_sensitivity    = syndromic_sensitivity,
+#  n_travellers             = 1000,
+#  n_sims                   = n_sims,
+#  flight_time              = 2/24,
+#  percent_compliant        = 100 # percentage
+#) %>% mutate(syndromic_sensitivity = syndromic_sensitivity,
+#             quarantine_days = 9,
+#             percent_compliant = 100)
