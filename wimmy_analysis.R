@@ -7,7 +7,7 @@ flight_time <- 2/24
 prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
                            p = c(0.5, 0.975))
 
-prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
+set.seed(145); prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
 
 saveRDS(tibble(prev_vector), 'Shiny/data/prevalence.rds')
 

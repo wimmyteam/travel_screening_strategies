@@ -18,7 +18,7 @@ run_scenario <- function(
   flight_time              = 2/24
 )
 {
-  set.seed(145)
+  set.seed(200)
 
   input <- strategy
   

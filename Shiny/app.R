@@ -52,8 +52,7 @@ ui <- fluidPage(
                                      equivalent to a managed isolation or quarantine."),
                              tags$li("Number of days in quarantine is the mandatory isolation period and ranges from 0
                                      to 10 days."),
-                             tags$li("We also simulated a baseline scenario which assumes no pre- or post-travel
-                             screening and no testing.")
+                             tags$li("We also simulated a baseline scenario which assumes no-quarantine and no-testing.")
                              
                              )
              ),
@@ -61,7 +60,9 @@ ui <- fluidPage(
              br(),
              fluidRow(
                column(4, tags$h4("Number of days of infectiousness remaining"),
-                      plotOutput(outputId = "stat1")),
+                      plotOutput(outputId = "stat1"),
+                      p("Number of days of infectiousness remaining per 1000 employees.
+                        The vertical lines show the mean for the different scenarios.")),
                column(3, 
                       tags$h4 ("Mean days of infectiousness remaining"), 
                       tableOutput(outputId = "tab1"),
