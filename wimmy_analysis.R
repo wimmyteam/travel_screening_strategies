@@ -9,6 +9,8 @@ prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
 
 prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
 
+saveRDS(tibble(prev_vector), 'Shiny/data/prevalence.rds')
+
 slider_options <- list(
   syndromic_sensitivity = c(0.7),
   quarantine_days = c(0:10),

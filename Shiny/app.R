@@ -5,6 +5,8 @@ library(scales)
 source("functions/analysis.R")
 n_sims = 10000
 
+prevalence <- read_rds("data/prevalence.rds")
+
 baseline <- read_rds("data/baseline_results.rds") %>%
   mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>%
   group_by(sim) %>%
@@ -61,7 +63,7 @@ ui <- fluidPage(
                column(4, tags$h4("Number of days of infectiousness remaining"),
                       plotOutput(outputId = "stat1")),
                column(3, 
-                      tags$h4 ("Mean number of days of infectiousness"), 
+                      tags$h4 ("Mean days of infectiousness remaining"), 
                       tableOutput(outputId = "tab1"),
                       br(),
                       tags$h4("Relative reduction"),
@@ -99,6 +101,9 @@ ui <- fluidPage(
                tags$li("Prevalence"),
                p("We obtain the mean and the limits from our Covid model, then generate a shape and scale parameter for a gamma
                  distribition from which we sample the prevalence for each simulation"),
+               plotOutput(outputId = "prevalence",
+                          width="800", 
+                          height="450"),
                p("Figure 2: The distribution of the sampled prevalence"),
                
                tags$li("Proportion of assymptomatic individuals")
@@ -144,8 +149,8 @@ server <- function(input, output) {
              "100-baseline" = .[[3]] - .[[4]],
              !!paste(percent_compliant(),"100", sep = "-") := .[[2]] - .[[3]]) %>% 
       select(-c(2:4)) %>% 
-    pivot_longer(!sim, names_to = "Scenarios") %>% 
-      mutate(Scenarios = factor(Scenarios, levels = unique(Scenarios)))
+    pivot_longer(!sim, names_to = "Scenario") %>% 
+      mutate(Scenario = factor(Scenario, levels = unique(Scenario)))
   })
   
   scenario_means <- eventReactive(input$go, {results() %>%
@@ -164,12 +169,12 @@ server <- function(input, output) {
   
   output$stat2 <- renderText({
     rr1 <- round(as.numeric(scenario_means()[1,2])/as.numeric(scenario_means()[3,2]),2)
-    paste(paste(percent_compliant(),"%", sep = ""), "compliant scenario vs baseline:", rr1)
+    paste(paste(percent_compliant(),"%", sep = ""), "compliant vs baseline scenario:", rr1)
   })
 
   output$stat3 <- renderText({
     rr2 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[3,2]),2)
-    paste("100% compliant scenario vs baseline:", rr2)
+    paste("100% compliant vs baseline scenario:", rr2)
   })
 
   output$stat4 <- renderText({
@@ -179,12 +184,22 @@ server <- function(input, output) {
   
   output$stat6 <- renderPlot({
     dat2() %>%
-      ggplot(aes(x = value, fill = Scenarios)) +
+      ggplot(aes(x = value, fill = Scenario)) +
       geom_histogram(alpha = 0.4, position = 'identity') +
       scale_y_log10(oob = scales::squish_infinite) +
-      theme_bw() +
+      theme_bw(base_size = 12) +
       labs(x = "Diffence in days of infectiousness remaining",
            y = "Simulations")
+  })
+  
+  # distribution of the prevalence
+  output$prevalence <- renderPlot({
+    prevalence %>%
+      ggplot(aes(x = prev_vector)) +
+      geom_density(color = "#00BF6F", 
+                   size = 1)+
+      labs(x = "Prevalence")+
+      theme_bw(base_size = 20)
   })
 }
 

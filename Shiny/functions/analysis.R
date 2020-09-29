@@ -21,9 +21,11 @@ plot_hist1 <- function(dat, scenario_means){
     geom_histogram(alpha=0.4, position = 'identity') +
     geom_vline(data = scenario_means, aes(xintercept = xvalue, color = percent_compliant), size =1)+
     scale_y_log10(oob = scales::squish_infinite)+
-    theme_bw()+
+    theme_bw(base_size = 12)+
     labs(x = "Number of days of infectiousness remaining",
-         y = "Simulations")
+         y = "Simulations")+
+    guides(fill=guide_legend(title="Scenario"),
+           color=guide_legend(title="Scenario"))
 }
 
 released_inf_trav_summary <- function(results, n_sims = 10000) {
