@@ -5,7 +5,18 @@ library(scales)
 source("functions/analysis.R")
 n_sims = 10000
 
-#baseline <- read_rds("data/baseline_results.RDS") 
+baseline <- read_rds("data/baseline_results.rds") %>%
+  mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>%
+  group_by(sim) %>%
+  summarise(sum_days_released_inf = sum(days_released_inf),
+            trav_vol = first(trav_vol)) %>%
+  mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>%
+  ungroup() %>%
+  full_join(tibble(sim = 1:n_sims)) %>%
+  mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller),
+                                                   0, days_released_inf_per_traveller),
+         percent_compliant = "baseline")  
+
 
 # Define UI for application t
 ui <- fluidPage(
@@ -26,34 +37,39 @@ ui <- fluidPage(
                                            min = 0, max = 10, value = 3, step = 1),
                                sliderInput(inputId = "percent_compliant",
                                            label = "compliance",
-                                           min = 0, max = 100, value = 80, step = 20),
+                                           min = 0, max = 80, value = 80, step = 20),
                                actionButton(inputId = "go",
                                             label = "Run simulation"))),
                       column(8,
-                             p("This application shows summary metrics from 10 000 pre-run
+                             tags$li("This application shows summary metrics from 10 000 pre-run
                              model simulations for different strategies."), 
-                             p("Employees quarantine either at home or in a hotel and test at the end of the quarantine period."),
-                             tags$li("Hotel quarantine: Employees quarantine in a hotel and test
-                                     after the quarantine period. Under this scenario, we assume that the employees are 100% compliant."),
-                             tags$li("Home quarantine: Employees quarantine at
-                                     home with imperfect compliance and test after the quarantine period."),
+                             tags$li("Employees quarantine either at home or in a hotel and test at the end of the quarantine period."),
+                             tags$li("Compliance in this context is the percentage of employees who
+                             adhere to the quarantine protocol. When compliance is 100%, 
+                                     employees adhere to all the quarantine protocols and this is
+                                     equivalent to a managed isolation or quarantine."),
                              tags$li("Number of days in quarantine is the mandatory isolation period and ranges from 0
                                      to 10 days."),
-                             tags$li("Compliance in this context is the probability of employees who
-                             will adhere to the quarantine protocol.
-                             How is it simulated?")
+                             tags$li("We also simulated a baseline scenario which assumes no pre- or post-travel
+                             screening and no testing.")
+                             
                              )
              ),
              h3("Model output"),
              br(),
              fluidRow(
-               column(4, tags$h4("Number of infectious days"),
+               column(4, tags$h4("Number of days of infectiousness remaining"),
                       plotOutput(outputId = "stat1")),
-               column(3, tags$h4("Relative reduction"),
-                      verbatimTextOutput(outputId = "stat2"),
-                      verbatimTextOutput(outputId = "stat3")),
-               column(4, tags$h4("Averted infectious days"),
-                      plotOutput(outputId = "stat4"))
+               column(3, 
+                      tags$h4 ("Mean number of days of infectiousness"), 
+                      tableOutput(outputId = "tab1"),
+                      br(),
+                      tags$h4("Relative reduction"),
+                      textOutput(outputId = "stat2", inline = TRUE),
+                      textOutput(outputId = "stat3"),
+                      textOutput(outputId = "stat4")),
+               column(4, tags$h4("Difference in days of infectiousness remaining"),
+                      plotOutput(outputId = "stat6"))
              ),
              br(),br(),br()
     ),
@@ -98,68 +114,78 @@ ui <- fluidPage(
 # Define server logic required 
 server <- function(input, output) {
   
-  # managed1 <- eventReactive(input$go, {
-  #   managed_quarentine_results <- read_rds("data/managed.RDS")
-  #   inf_days_summary(managed_quarentine_results, n_sims = n_sims) %>%
-  #   mutate(Scenario = "managed")})
-  # 
-  #   home1 <- eventReactive(input$go, {
-  #     home_quarentine_results <- readRDS("data/home.RDS") 
-  #     inf_days_summary(home_quarentine_results, n_sims = n_sims) %>% 
-  #     mutate(Scenario = "home")
-  #   })
-
-  # dat <- eventReactive(input$go, {bind_rows(home(),managed())})
-  
-  sims <- eventReactive(input$go, {
-    tibble(percent_compliant = rep(c(input$percent_compliant,100), n_sims)) %>% 
-      group_by(percent_compliant) %>% 
-      mutate(sim = row_number()) %>% 
-      ungroup()
+  # reactive expression
+  percent_compliant <- eventReactive( input$go, {
+    input$percent_compliant
   })
   
-  results <- eventReactive(input$go, {
-    res <- read_rds("data/simulation_results.RDS") %>% 
+  sims <- eventReactive(input$go, {
+    tibble(percent_compliant = rep(c(input$percent_compliant, 100), n_sims)) %>% 
+      group_by(percent_compliant) %>% 
+      mutate(sim = row_number()) %>% ungroup()
+  })
+  
+  dat <- eventReactive(input$go, {
+    res <- read_rds("data/simulation_results.rds") %>% 
       filter(quarantine_days == input$quarantine_days,
              percent_compliant %in% c(input$percent_compliant, 100))
     inf_days_summary(res, sims())})
   
-  # dat <- eventReactive(input$go, {
-  #   results() %>% 
-  #     pivot_wider(names_from = percent_compliant, 
-  #                 values_from = 3:5) %>% 
-  #     mutate(diff = as.vector(.[6] - .[7]))
-  #   })
-  # 
+  results <- eventReactive(input$go, {bind_rows(dat(),baseline) %>% 
+      mutate(percent_compliant = factor(percent_compliant, levels=unique(percent_compliant)))
+      })
+  
+  dat2 <- eventReactive(input$go, {
+    results() %>%
+    select(sim, percent_compliant, days_released_inf_per_traveller) %>% 
+    pivot_wider(names_from = percent_compliant,
+                values_from = days_released_inf_per_traveller) %>%
+      mutate(!!paste(percent_compliant(),"baseline", sep = "-") := .[[2]] - .[[4]],
+             "100-baseline" = .[[3]] - .[[4]],
+             !!paste(percent_compliant(),"100", sep = "-") := .[[2]] - .[[3]]) %>% 
+      select(-c(2:4)) %>% 
+    pivot_longer(!sim, names_to = "Scenarios") %>% 
+      mutate(Scenarios = factor(Scenarios, levels = unique(Scenarios)))
+  })
+  
   scenario_means <- eventReactive(input$go, {results() %>%
     group_by(percent_compliant) %>%
-    summarise(xvalue=mean(days_released_inf_per_traveller)) %>% 
-      mutate(percent_compliant = as.factor(percent_compliant))
+    summarise(xvalue=mean(days_released_inf_per_traveller))
   })
 
-    
   output$stat1 <- renderPlot({
     plot_hist1(results(), scenario_means())
     })
   
-  output$stat2 <- renderPrint({
-    as.numeric(scenario_means()[1,2])/as.numeric(scenario_means()[2,2])
+  output$tab1 <- renderTable({
+    scenario_means() %>% rename("Scenario" = percent_compliant,
+                                "Mean" = xvalue)
   })
   
-  output$stat3 <- renderPrint({
-    scenario_means()
+  output$stat2 <- renderText({
+    rr1 <- round(as.numeric(scenario_means()[1,2])/as.numeric(scenario_means()[3,2]),2)
+    paste(paste(percent_compliant(),"%", sep = ""), "compliant scenario vs baseline:", rr1)
+  })
+
+  output$stat3 <- renderText({
+    rr2 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[3,2]),2)
+    paste("100% compliant scenario vs baseline:", rr2)
+  })
+
+  output$stat4 <- renderText({
+    rr3 <- round(as.numeric(scenario_means()[1,2])/as.numeric(scenario_means()[2,2]),2)
+    paste(paste(percent_compliant(),"%", sep = ""), "vs 100% compliant scenario:", rr3)
   })
   
-  # 
-  # output$stat3 <- renderPlot({
-  #   dat() %>% 
-  #     ggplot(aes(x = diff_home_managed))+
-  #     geom_histogram(alpha=0.4, fill = "#f8766d") +
-  #     scale_y_log10()+
-  #     theme_bw()+
-  #     labs(y = "Simulations")
-  #     
-  # })
+  output$stat6 <- renderPlot({
+    dat2() %>%
+      ggplot(aes(x = value, fill = Scenarios)) +
+      geom_histogram(alpha = 0.4, position = 'identity') +
+      scale_y_log10(oob = scales::squish_infinite) +
+      theme_bw() +
+      labs(x = "Diffence in days of infectiousness remaining",
+           y = "Simulations")
+  })
 }
 
 # Run the application 

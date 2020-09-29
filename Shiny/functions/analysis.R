@@ -1,9 +1,5 @@
 
 inf_days_summary <- function(results, sims) {
-  # sims = tibble(percent_compliant = rep(c(80,100), n_sims)) %>% 
-  #   group_by(percent_compliant) %>% 
-  #   mutate(sim = row_number()) %>% 
-  #   ungroup()
   summary_stats <- results %>% 
     mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
     group_by(sim, percent_compliant) %>% 
@@ -26,7 +22,7 @@ plot_hist1 <- function(dat, scenario_means){
     geom_vline(data = scenario_means, aes(xintercept = xvalue, color = percent_compliant), size =1)+
     scale_y_log10(oob = scales::squish_infinite)+
     theme_bw()+
-    labs(x = "Number of infectious days",
+    labs(x = "Number of days of infectiousness remaining",
          y = "Simulations")
 }
 
@@ -51,35 +47,3 @@ released_inf_trav_summary <- function(results, n_sims = 10000) {
   return(summary_stats)
 }
 
-# res_x <- simulation_results %>%
-#   filter(quarantine_days == 3,
-#          percent_compliant %in% c(80, 100))
-# 
-#  results <- inf_days_summary(res_x, sims)
-# 
-# scenario_means <- results %>% group_by(percent_compliant) %>%
-#   summarise(xvalue=mean(days_released_inf_per_traveller))
-# 
-# res_xx <- res_x %>% pivot_wider(names_from = percent_compliant,
-#                                 values_from = 3:5) %>%
-#   mutate(diff = as.vector(.[6] - .[7]))  
-# 
-# results %>% 
-#   ggplot(aes(x = days_released_inf_per_traveller, fill = percent_compliant))+
-#   geom_histogram(alpha=0.4, position = 'identity') +
-#   geom_vline(data = scenario_means, aes(xintercept = xvalue, color = percent_compliant))+
-#   scale_y_log10(oob = scales::squish_infinite)+
-#   theme_bw()+
-#   labs(x = "Number of infectious days",
-#        y = "Simulations")  
-
-# xx <- baseline %>% 
-#   mutate(days_released_inf = if_else(is.na(days_released_inf), 0, days_released_inf)) %>% 
-#   group_by(sim) %>% 
-#   summarise(sum_days_released_inf = sum(days_released_inf),
-#             trav_vol = first(trav_vol)) %>% 
-#   mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>% 
-#   ungroup() %>% 
-#   full_join(tibble(sim = 1:n_sims)) %>% 
-#   mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller), 
-#                                                    0, days_released_inf_per_traveller))
