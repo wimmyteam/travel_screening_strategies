@@ -39,9 +39,8 @@ ui <- fluidPage(
                                            min = 0, max = 10, value = 3, step = 1),
                                sliderInput(inputId = "percent_compliant",
                                            label = "compliance",
-                                           min = 0, max = 80, value = 80, step = 20),
-                               actionButton(inputId = "go",
-                                            label = "Run simulation"))),
+                                           min = 0, max = 80, value = 80, step = 20)
+                               )),
                       column(8,
                              tags$li("This application shows summary metrics from 10 000 pre-run
                              model simulations for different strategies."), 
@@ -121,27 +120,27 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   # reactive expression
-  percent_compliant <- eventReactive( input$go, {
+  percent_compliant <- reactive({
     input$percent_compliant
   })
   
-  sims <- eventReactive(input$go, {
+  sims <- reactive({
     tibble(percent_compliant = rep(c(input$percent_compliant, 100), n_sims)) %>% 
       group_by(percent_compliant) %>% 
       mutate(sim = row_number()) %>% ungroup()
   })
   
-  dat <- eventReactive(input$go, {
+  dat <- reactive({
     res <- read_rds("data/simulation_results.rds") %>% 
       filter(quarantine_days == input$quarantine_days,
              percent_compliant %in% c(input$percent_compliant, 100))
     inf_days_summary(res, sims())})
   
-  results <- eventReactive(input$go, {bind_rows(dat(),baseline) %>% 
+  results <- reactive({bind_rows(dat(),baseline) %>% 
       mutate(percent_compliant = factor(percent_compliant, levels=unique(percent_compliant)))
       })
   
-  dat2 <- eventReactive(input$go, {
+  dat2 <- reactive({
     results() %>%
     select(sim, percent_compliant, days_released_inf_per_traveller) %>% 
     pivot_wider(names_from = percent_compliant,
@@ -154,7 +153,7 @@ server <- function(input, output) {
       mutate(Scenario = factor(Scenario, levels = unique(Scenario)))
   })
   
-  scenario_means <- eventReactive(input$go, {results() %>%
+  scenario_means <- reactive({results() %>%
     group_by(percent_compliant) %>%
     summarise(xvalue=mean(days_released_inf_per_traveller))
   })
