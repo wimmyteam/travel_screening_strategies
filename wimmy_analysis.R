@@ -13,7 +13,7 @@ saveRDS(tibble(prev_vector), 'Shiny/data/prevalence.rds')
 
 slider_options <- list(
   syndromic_sensitivity = c(0.7),
-  quarantine_days = c(0:10),
+  quarantine_days = c(1:10),
   percent_compliant = c(0, 20, 40, 60 ,80, 100)
 )
 
@@ -48,6 +48,10 @@ for (i in 1:nrow(option_combinations)) {
     combined_results <- rbind(combined_results, result)
 }
 
+combined_results <- combined_results %>% 
+  mutate(days_released_inf_mod = days_released_inf - 1,
+         days_released_inf_mod = if_else(days_released_inf_mod < 0, 0, days_released_inf_mod))
+
 saveRDS(combined_results, 'Shiny/data/simulation_results.rds')
 
 baseline_strategy <- 
@@ -55,8 +59,8 @@ baseline_strategy <-
     pathogen = "SARS-CoV-2",
     syndromic_sensitivity  = 0.7,
     pre_board_screening    = NA,
-    post_flight_screening  = NA,
-    first_test_delay       = NA,
+    post_flight_screening  = FALSE,
+    first_test_delay       = 0,
     second_test_delay      = NA,
     max_mqp                = 14,
     post_symptom_window    = 7,
@@ -72,6 +76,10 @@ baseline_results <- run_scenario(
   n_sims                   = n_sims,
   flight_time              = flight_time
 )
+
+baseline_results <- baseline_results %>% 
+  mutate(days_released_inf_mod = days_released_inf - 1,
+         days_released_inf_mod = if_else(days_released_inf_mod < 0, 0, days_released_inf_mod))
 
 saveRDS(baseline_results, 'Shiny/data/baseline_results.rds')
 
