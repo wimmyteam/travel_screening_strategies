@@ -26,6 +26,8 @@ plot_hist1 <- function(dat, scenario_means){
     geom_vline(data = scenario_means, aes(xintercept = xvalue, color = percent_compliant), size =1)+
     scale_y_log10(oob = scales::squish_infinite)+
     theme_bw(base_size = 12)+
+    theme(legend.margin=margin(0,0,0,0),
+          legend.box.margin=margin(0,0,0,0))+
     labs(x = "Number of remaining infectious days",
          y = "Simulations")+
     guides(fill=guide_legend(title="Scenario"),

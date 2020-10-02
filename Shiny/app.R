@@ -62,7 +62,9 @@ investigated scenarios of quarantining and PCR testing of mine workers prior to 
              br(),
              fluidRow(
                column(4, tags$h4("Number of remaining infectious days"),
-                      plotOutput(outputId = "stat1"),
+                      plotOutput(outputId = "stat1",
+                                 width = 450,
+                                 height = 400),
                       p("Number of remaining infectious days per 1000 employees in different
                       scenarios.
                         The vertical lines show the mean number of remaining infectious days.")),
@@ -75,7 +77,11 @@ investigated scenarios of quarantining and PCR testing of mine workers prior to 
                       textOutput(outputId = "stat3"),
                       textOutput(outputId = "stat4")),
                column(4, tags$h4("Difference in the number of remaining infectious days"),
-                      plotOutput(outputId = "stat6"))
+                      plotOutput(outputId = "stat6",
+                                 width = 520,
+                                 height = 400),
+                      p("Difference in the number of remaining infectious days between different
+                      scenarios.The vertical lines show the mean difference."))
              ),
              br(),br(),br()
     ),
@@ -91,7 +97,6 @@ investigated scenarios of quarantining and PCR testing of mine workers prior to 
                  For this simulation exercise, we used the PCR sensitivity function as modelled by Clifford et al. (2020)."),
                
                div(img(src = "kucirka_plot.png", 
-                       
                        width="800", 
                        height="450"), style="text-align: left;"),
                p("Figure 1: Time varying PCR sensitivity curve, obtained by fitting a Binomial GAM to the data collated in", 
@@ -141,7 +146,7 @@ server <- function(input, output) {
     inf_days_summary(res, sims())})
   
   results <- reactive({bind_rows(dat(),baseline) %>% 
-      mutate(percent_compliant = factor(percent_compliant, levels = c("baseline", input$percent_compliant, "100")))
+      mutate(percent_compliant = factor(percent_compliant, levels = c("baseline", percent_compliant(), "100")))
       })
   
   dat2 <- reactive({
@@ -178,17 +183,17 @@ server <- function(input, output) {
 
   output$stat2 <- renderText({
     rr1 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[1,2]),2)
-    paste(paste(percent_compliant(),"%", sep = ""), "compliant vs baseline scenario:", rr1)
+    paste(paste(percent_compliant(),"%", sep = ""), "compliant versus baseline scenario:", rr1)
   })
 
   output$stat3 <- renderText({
     rr2 <- round(as.numeric(scenario_means()[3,2])/as.numeric(scenario_means()[1,2]),2)
-    paste("100% compliant vs baseline scenario:", rr2)
+    paste("100% compliant versus baseline scenario:", rr2)
   })
 
   output$stat4 <- renderText({
     rr3 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[3,2]),2)
-    paste(paste(percent_compliant(),"%", sep = ""), "vs 100% compliant scenario:", rr3)
+    paste(paste(percent_compliant(),"%", sep = ""), "versus 100% compliant scenario:", rr3)
   })
   
   output$stat6 <- renderPlot({
@@ -204,7 +209,7 @@ server <- function(input, output) {
       scale_y_log10(oob = scales::squish_infinite) +
       theme_bw(base_size = 12) +
       labs(x = "Diffence in remaining infectious days",
-           y = "Simulations")
+           y = "Simulations") 
   })
   
   # distribution of the prevalence
