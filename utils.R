@@ -1107,6 +1107,7 @@ make_incubation_times <- function(
   pathogen,
   syndromic_sensitivity = 0.7){
   
+  set.seed(145)
   incubation_times <- crossing(idx  = 1:n_travellers,
                                type = c("symptomatic",
                                         "asymptomatic") %>%
@@ -1127,6 +1128,7 @@ make_incubation_times <- function(
   source("wolfel.R")
   source("he.R")
   # infectious period from time of onset to no longer infectious
+  
   incubation_times %<>% 
     mutate(u = runif(n = nrow(.), 0.01, 0.99)) %>%
     mutate(inf_from_onset = 
@@ -1185,6 +1187,7 @@ make_inf_arrivals <-
 
   countries <- 'simland'
   
+  set.seed(145)
   inf_arrivals <- as.list(countries)%>%
     purrr::set_names(., .) %>%
     purrr::map(~prev_vector) %>%
