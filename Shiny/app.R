@@ -163,6 +163,11 @@ server <- function(input, output) {
     group_by(percent_compliant) %>%
     summarise(xvalue=mean(days_released_inf_per_traveller))
   })
+  
+  scenario_means_diff <- reactive({dat2() %>%
+      group_by(Scenario) %>%
+      summarise(xvalue=mean(value))
+  })
 
   output$stat1 <- renderPlot({
     plot_hist1(results(), scenario_means())
@@ -172,7 +177,7 @@ server <- function(input, output) {
     scenario_means() %>% rename("Scenario" = percent_compliant,
                                 "Mean" = xvalue)
   })
-  
+
   output$stat2 <- renderText({
     rr1 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[1,2]),2)
     paste(paste(percent_compliant(),"%", sep = ""), "compliant vs baseline scenario:", rr1)
@@ -191,8 +196,13 @@ server <- function(input, output) {
   output$stat6 <- renderPlot({
     dat2() %>%
       ggplot(aes(x = value)) +
-      stat_bin(aes(color = Scenario), geom="step", position = 'identity', size = 1)+
-      #geom_histogram(alpha = 0.4, position = 'identity') +
+      stat_bin(aes(color = Scenario), 
+               geom="step", 
+               position = 'identity', 
+               size = 1,
+               binwidth = 1)+
+      geom_vline(data = scenario_means_diff(), 
+                 aes(xintercept = xvalue, color = Scenario), size = 1)+
       scale_y_log10(oob = scales::squish_infinite) +
       theme_bw(base_size = 12) +
       labs(x = "Diffence in remaining infectious days",

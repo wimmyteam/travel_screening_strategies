@@ -18,7 +18,11 @@ inf_days_summary <- function(results, sims) {
 plot_hist1 <- function(dat, scenario_means){
   dat %>% 
     ggplot(aes(x = days_released_inf_per_traveller))+
-    stat_bin(aes(color = percent_compliant), geom="step", position = 'identity', size = 1) +
+    stat_bin(aes(color = percent_compliant), 
+             geom="step",
+             position = 'identity',
+             size = 1,
+             binwidth = 1) +
     geom_vline(data = scenario_means, aes(xintercept = xvalue, color = percent_compliant), size =1)+
     scale_y_log10(oob = scales::squish_infinite)+
     theme_bw(base_size = 12)+
