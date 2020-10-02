@@ -23,10 +23,10 @@ baseline <- read_rds("data/baseline_results.rds") %>%
 
 # Define UI for application 
 ui <- fluidPage(theme = shinytheme("flatly"),
-                titlePanel("Peru Simulation Model"),
+                titlePanel("Quellaveco Quarantine and PCR testing Simulation Model"),
                 fluidRow(column(12,
-                                p("This web application is used to visualize the summary metrics from the Peru simulation model 
-                             investigating strategies aimed at reduce the risk of SARS-Cov2 re-introduction from infected employees."),
+                                p("This web app shows the results of a simulation study that
+investigated scenarios of quarantining and PCR testing of mine workers prior to travelling to the mining site."),
                 br())
                 ),
   tabsetPanel(
@@ -43,20 +43,18 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                                            min = 0, max = 80, value = 80, step = 20)
                                )),
                       column(8,
-                             tags$p("This application shows summary metrics from 10 000 run
-                             model simulations for different strategies. We ran simulations with 1000 employees.
-                             The employees quarantine either at home or in a hotel and get tested at the end of the quarantine period."),
+                             tags$p("Use the sliders to change the scenario. As the duration of quarantine and compliance with quarantine decreases,
+                             the risk of SARS-CoV-2 re-introduction by infected employees increases. The results emanate from 10 000 model simulations per scenario.
+                             Each simulation is based on 1000 employees being subjected to a thermal scan and questionnaire-based screening, a period of quarantine and a PCR test.
+                             The employees quarantine either at home - with imperfect compliance - or at a hotel - with perfect compliance - and get tested at the end of the quarantine period."),
                              
-                             tags$p("The number of days in quarantine is the mandatory isolation period and ranges from 1
-                                     to 10 days."),
+                             tags$p("The number of days in quarantine ranges from 1 to 10 days."),
                              
                              tags$p("Compliance in this context is the percentage of employees who adhere to the 
-                             quarantine protocol. When compliance is 100%, 
-                                     employees will adhere to all the quarantine protocols and this is
-                                     equivalent to a managed isolation or quarantine in a hotel or another facility."),
+                             quarantine protocol."),
                              
-                             tags$p("We also simulated a baseline scenario which assumes no pre- or post-arrival screening 
-                                     and no-quarantine. Under this scenario, employees get tested immediately on arrival.")
+                             tags$p("We also simulated a baseline scenario that assumes no thermal scan or questionnaire-based screening, 
+                                     and no quarantine. Under this scenario, employees undergo PCR testing immediately on arrival.")
                              
                              )
              ),
@@ -90,7 +88,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                tags$b("PCR sensitivity"),
                p("The PCR sensitivity function is defined as the the probability of an infected employee testing positive 
                  by nasopharyngeal or throat swab (NTS) PCR on a given day and is modelled as a function of time. 
-                 For this simulation exercise, we used test sensitivity similar to what Clifford et al. (2020) used."),
+                 For this simulation exercise, we used the PCR sensitivity function as modelled by Clifford et al. (2020)."),
                
                div(img(src = "kucirka_plot.png", 
                        
@@ -103,7 +101,7 @@ ui <- fluidPage(theme = shinytheme("flatly"),
                tags$b("Syndromic sensitivity"),
                p("This is the proportion of symptomatic persons who don't pass the thermal scan and questionnaire-based screening 
                  that is assumed to take place prior to the employee going into quarantine. We assumed
-                 this proportion to be 0.7 for all the simulations similar to what Clifford et al. (2020) used."),
+                 this proportion to be 0.7 in line with the assumption in Clifford et al. (2020)."),
                
                tags$b("Prevalence"),
                p("We obtain the mean and the range of the prevalence of active infections from the", 
@@ -151,9 +149,9 @@ server <- function(input, output) {
     select(sim, percent_compliant, days_released_inf_per_traveller) %>% 
     pivot_wider(names_from = percent_compliant,
                 values_from = days_released_inf_per_traveller) %>%
-      mutate(!!paste(percent_compliant(),"baseline", sep = "-") := .[[2]] - .[[4]],
-             "100-baseline" = .[[3]] - .[[4]],
-             !!paste(percent_compliant(),"100", sep = "-") := .[[2]] - .[[3]]) %>% 
+      mutate(!!paste(percent_compliant(),"baseline", sep = "% versus ") := .[[2]] - .[[4]],
+             "100% versus baseline" = .[[3]] - .[[4]],
+             !!paste(percent_compliant(),"100%", sep = "% versus ") := .[[2]] - .[[3]]) %>% 
       select(-c(2:4)) %>% 
     pivot_longer(!sim, names_to = "Scenario") %>% 
       mutate(Scenario = factor(Scenario, levels = unique(Scenario)))
