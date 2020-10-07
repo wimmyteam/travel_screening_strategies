@@ -134,7 +134,7 @@ server <- function(input, output) {
   })
   
   sims <- reactive({
-    tibble(percent_compliant = rep(c(input$percent_compliant, 100), n_sims)) %>% 
+    tibble(percent_compliant = rep(c(paste0(percent_compliant(),"%"), "100%"), n_sims)) %>% 
       group_by(percent_compliant) %>% 
       mutate(sim = row_number()) %>% ungroup()
   })
@@ -142,11 +142,15 @@ server <- function(input, output) {
   dat <- reactive({
     res <- read_rds("data/simulation_results.rds") %>% 
       filter(quarantine_days == input$quarantine_days,
-             percent_compliant %in% c(input$percent_compliant, 100))
+             percent_compliant %in% c(input$percent_compliant, 100)) %>% 
+      mutate(percent_compliant = percent(percent_compliant/100))
+    
     inf_days_summary(res, sims())})
   
-  results <- reactive({bind_rows(dat(),baseline) %>% 
-      mutate(percent_compliant = factor(percent_compliant, levels = c("baseline", percent_compliant(), "100")))
+  results <- reactive({
+    bind_rows(dat(),baseline) %>% 
+      mutate(percent_compliant = factor(percent_compliant, levels = unique(percent_compliant)),
+             percent_compliant = factor(percent_compliant, levels = rev(levels(percent_compliant))))
       })
   
   dat2 <- reactive({
@@ -156,7 +160,7 @@ server <- function(input, output) {
                 values_from = days_released_inf_per_traveller) %>%
       mutate(!!paste(percent_compliant(),"baseline", sep = "% versus ") := .[[2]] - .[[4]],
              "100% versus baseline" = .[[3]] - .[[4]],
-             !!paste(percent_compliant(),"100%", sep = "% versus ") := .[[2]] - .[[3]]) %>% 
+             !!paste("100%", paste0(percent_compliant(),"%"), sep = " versus ") := .[[3]] - .[[2]]) %>% 
       select(-c(2:4)) %>% 
     pivot_longer(!sim, names_to = "Scenario") %>% 
       mutate(Scenario = factor(Scenario, levels = unique(Scenario)))
@@ -164,7 +168,8 @@ server <- function(input, output) {
   
   scenario_means <- reactive({results() %>%
     group_by(percent_compliant) %>%
-    summarise(xvalue=mean(days_released_inf_per_traveller))
+    summarise(xvalue=mean(days_released_inf_per_traveller)) %>% 
+      ungroup()
   })
   
   scenario_means_diff <- reactive({dat2() %>%
@@ -183,7 +188,7 @@ server <- function(input, output) {
 
   output$stat2 <- renderText({
     rr1 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[1,2]),2)
-    paste(paste(percent_compliant(),"%", sep = ""), "compliant versus baseline scenario:", rr1)
+    paste(paste0(percent_compliant(),"%"), "compliant versus baseline scenario:", rr1)
   })
 
   output$stat3 <- renderText({
@@ -193,7 +198,7 @@ server <- function(input, output) {
 
   output$stat4 <- renderText({
     rr3 <- round(as.numeric(scenario_means()[2,2])/as.numeric(scenario_means()[3,2]),2)
-    paste(paste(percent_compliant(),"%", sep = ""), "versus 100% compliant scenario:", rr3)
+    paste(paste0(percent_compliant(),"%"), "versus 100% compliant scenario:", rr3)
   })
   
   output$stat6 <- renderPlot({
