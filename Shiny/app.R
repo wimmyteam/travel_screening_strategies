@@ -16,114 +16,160 @@ baseline <- read_rds("data/baseline_results.rds") %>%
   mutate(days_released_inf_per_traveller = (sum_days_released_inf/trav_vol)*1000) %>%
   ungroup() %>%
   full_join(tibble(sim = 1:n_sims)) %>%
-  mutate(days_released_inf_per_traveller = if_else(is.na(days_released_inf_per_traveller),
-                                                   0, days_released_inf_per_traveller),
-         percent_compliant = "baseline")  
+  mutate(days_released_inf_per_traveller = if_else(
+    is.na(days_released_inf_per_traveller), 0, days_released_inf_per_traveller),
+    percent_compliant = "baseline"
+  )
 
 
 # Define UI for application 
-ui <- fluidPage(theme = shinytheme("flatly"),
-                titlePanel("Quellaveco Quarantine and PCR testing Simulation Model"),
-                fluidRow(column(12,
-                                p("This web app shows the results of a simulation study that
-investigated scenarios of quarantining and PCR testing of mine workers prior to travelling to the mining site."),
-                br())
-                ),
+ui <- fluidPage(
+  theme = shinytheme("flatly"),
+  titlePanel("Quellaveco Quarantine and PCR testing Simulation Model"),
+  fluidRow(
+    column(12,
+      p("This web app shows the results of a simulation study that
+        investigated strategies for screening employees prior
+        to travelling to the mining site."),
+      p("The screening strategies all take the form of a symptomatic screening
+        (thermal scan and questionnaire),
+        followed by an quarantine period,
+        followed by a RT-PCR test."),
+      p("This study examines the impact of varying the quarantine period
+        (0 to 10 days) and levels of compliance (0% to 100%) with the prescribed quarantine"),
+      p("We also simulated a baseline scenario that assumes only thermal scanning and
+        questionnaire-based screening with no quarantine period or RT-PCT test."),
+      p("For each quarantine period and compliance level the study used 10 000
+        simulations with 1000 travellers per simulation
+        each to estimate the resulting number of infectious days
+        per 1000 travellers. Infectious days are a measure designed to measure the exposure of
+        the population to potential infection."),
+      p("As the duration of quarantine and compliance with quarantine decreases,
+        the risk of SARS-CoV-2 re-introduction by infected employees increases.")
+    )
+  ),
   tabsetPanel(
-    tabPanel("Summary metrics",
-             h3("Model input"),
-             br(),
-             fluidRow(column(4,
-                             wellPanel(
-                               sliderInput(inputId = "quarantine_days",
-                                           label = "Number of days in quarantine",
-                                           min = 1, max = 10, value = 3, step = 1),
-                               sliderInput(inputId = "percent_compliant",
-                                           label = "Compliance (in %)",
-                                           min = 0, max = 80, value = 80, step = 20)
-                               )),
-                      column(8,
-                             tags$p("Use the sliders to change the scenario. As the duration of quarantine and compliance with quarantine decreases,
-                             the risk of SARS-CoV-2 re-introduction by infected employees increases. The results emanate from 10 000 model simulations per scenario.
-                             Each simulation is based on 1000 employees being subjected to a thermal scan and questionnaire-based screening, a period of quarantine and a PCR test.
-                             The employees quarantine either at home - with imperfect compliance - or at a hotel - with perfect compliance - and get tested at the end of the quarantine period."),
-                             
-                             tags$p("The number of days in quarantine ranges from 1 to 10 days."),
-                             
-                             tags$p("Compliance in this context is the percentage of employees who adhere to the 
-                             quarantine protocol."),
-                             
-                             tags$p("We also simulated a baseline scenario that assumes no thermal scan or questionnaire-based screening, 
-                                     and no quarantine. Under this scenario, employees undergo PCR testing immediately on arrival.")
-                             
-                             )
-             ),
-             h3("Model output"),
-             br(),
-             fluidRow(
-               column(4, tags$h4("Number of remaining infectious days"),
-                      plotOutput(outputId = "stat1",
-                                 width = 450,
-                                 height = 400),
-                      p("Number of remaining infectious days per 1000 employees in different
-                      scenarios.
-                        The vertical lines show the mean number of remaining infectious days.")),
-               column(3, 
-                      tags$h4 ("Mean days of infectiousness remaining"), 
-                      tableOutput(outputId = "tab1"),
-                      br(),
-                      tags$h4("Relative reduction"),
-                      textOutput(outputId = "stat2", inline = TRUE),
-                      textOutput(outputId = "stat3"),
-                      textOutput(outputId = "stat4")),
-               column(4, tags$h4("Difference in the number of remaining infectious days"),
-                      plotOutput(outputId = "stat6",
-                                 width = 520,
-                                 height = 400),
-                      p("Difference in the number of remaining infectious days between different
-                      scenarios.The vertical lines show the mean difference."))
-             ),
-             br(),br(),br()
+    tabPanel(
+      "Summary metrics",
+      fluidRow(
+        column(4,
+          h3("Model input"),
+          wellPanel(
+            sliderInput(
+              inputId = "quarantine_days",
+              label = "Number of days in quarantine",
+              min = 0, max = 10, value = 3, step = 1
+            ),
+            sliderInput(
+              inputId = "percent_compliant",
+              label = "Compliance (in %)",
+              min = 0, max = 80, value = 80, step = 20
+            )
+          )
+        ),
+        column(8,
+          h3("Instructions"),
+          tags$p(
+            "Use the sliders to adjust the length of days in quarantine
+            and the level of compliance with the quarantine."),
+          tags$p("The number of days in quarantine ranges from 1 to 10 days."),
+          tags$p("Compliance in this context is the percentage of employees who adhere to the 
+            quarantine protocol."
+          )
+        )
+      ),
+      h3("Model output"),
+      fluidRow(
+        column(4,
+          tags$h4("Number of remaining infectious days"),
+          plotOutput(
+            outputId = "stat1",
+            width = 450,
+            height = 400
+          ),
+          p("Number of remaining infectious days per 1000 employees in different scenarios.
+            The vertical lines show the mean number of remaining infectious days.")
+        ),
+        column(3, 
+          tags$h4("Mean days of infectiousness remaining"), 
+          tableOutput(outputId = "tab1"),
+          br(),
+          tags$h4("Relative reduction"),
+          p("The relative mean number of infectious days."),
+          textOutput(outputId = "stat2", inline = TRUE),
+          textOutput(outputId = "stat3"),
+          textOutput(outputId = "stat4")
+        ),
+        column(4,
+          tags$h4("Difference in the number of remaining infectious days"),
+          plotOutput(outputId = "stat6",
+                     width = 520,
+                     height = 400
+          ),
+          p("Difference in the number of remaining infectious days between different
+          scenarios.The vertical lines show the mean difference.")
+        )
+      )
     ),
-    tabPanel("Underlying assumptions",
-             fluidRow(column(12,
-               br(),
-               p("This model was adapted from", tags$a(href = "https://www.medrxiv.org/content/10.1101/2020.07.24.20161281v2", "Clifford et al. (2020).")),
-               p("The code is available on",tags$a(href = "https://github.com/wimmyteam/travel_screening_strategies", "GitHub.")),
-               br(),
-               tags$b("PCR sensitivity"),
-               p("The PCR sensitivity function is defined as the the probability of an infected employee testing positive 
-                 by nasopharyngeal or throat swab (NTS) PCR on a given day and is modelled as a function of time. 
-                 For this simulation exercise, we used the PCR sensitivity function as modelled by Clifford et al. (2020)."),
-               
-               div(img(src = "kucirka_plot.png", 
-                       width="800", 
-                       height="450"), style="text-align: left;"),
-               p("Figure 1: Time varying PCR sensitivity curve, obtained by fitting a Binomial GAM to the data collated in", 
-                 tags$a(href = "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7240870/","Kucirka et al. (2020)."),
-                 "The mean fit is used as the time-varying sensitivity function, P(t), and hence no uncertainty is shown in the figure."),
-               
-               tags$b("Syndromic sensitivity"),
-               p("This is the proportion of symptomatic persons who don't pass the thermal scan and questionnaire-based screening 
-                 that is assumed to take place prior to the employee going into quarantine. We assumed
-                 this proportion to be 0.7 in line with the assumption in Clifford et al. (2020)."),
-               
-               tags$b("Prevalence"),
-               p("We obtain the mean and the range of the prevalence of active infections from the", 
-                 tags$a(href = "https://github.com/wdelva/AAcovid", "COVID-19 Surveillance Modelling study"), 
-               "and then estimated corresponding shape and rate parameters for a gamma
-                 distribition from which we sampled prevalence values for each simulation."),
-               plotOutput(outputId = "prevalence",
-                          width="800", 
-                          height="450"),
-               p("Figure 2: The distribution of the sampled prevalence.")
-              
-             )
-             ),
-             br(),br(),br()
+    tabPanel(
+      "Underlying assumptions",
+      fluidRow(
+        column(12,
+          br(),
+          p("This model was adapted from",
+            tags$a(href = "https://www.medrxiv.org/content/10.1101/2020.07.24.20161281v2",
+                   "Clifford et al. (2020)."
+            )
+          ),
+          p("The code is available on",
+            tags$a(href = "https://github.com/wimmyteam/travel_screening_strategies", "GitHub.")
+          ),
+          br(),
+          tags$b("PCR sensitivity"),
+          p("The PCR sensitivity function is defined as the the probability of an infected
+            employee testing positive by nasopharyngeal or throat swab (NTS) PCR on a given
+            day and is modelled as a function of time.
+            For this simulation exercise, we used the PCR sensitivity function as modelled
+            by Clifford et al. (2020)."
+          ),
+          div(
+            img(src = "kucirka_plot.png", width="800", height="450"),
+            style="text-align: left;"
+          ),
+          p("Figure 1: Time varying PCR sensitivity curve, obtained by fitting a Binomial GAM
+            to the data collated in", 
+            tags$a(href = "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7240870/",
+                   "Kucirka et al. (2020)."
+            ),
+            "The mean fit is used as the time-varying sensitivity function, P(t),
+            and hence no uncertainty is shown in the figure."
+          ),
+          tags$b("Syndromic sensitivity"),
+          p("This is the proportion of symptomatic persons who don't pass the thermal
+            scan and questionnaire-based screening that is assumed to take place prior to
+            the employee going into quarantine. We assumed this proportion to be 0.7
+            in line with the assumption in Clifford et al. (2020)."
+          ),
+          tags$b("Prevalence"),
+          p("We obtain the mean and the range of the prevalence of active infections from the", 
+            tags$a(href = "https://github.com/wdelva/AAcovid",
+              "COVID-19 Surveillance Modelling study"
+            ), 
+            "and then estimated corresponding shape and rate parameters for a gamma
+            distribition from which we sampled prevalence values for each simulation."
+          ),
+          plotOutput(outputId = "prevalence",
+            width="800", 
+            height="450"
+          ),
+          p("Figure 2: The distribution of the sampled prevalence.")
+        )
+      )
     )
   )
 )
+
+
 
 # Define server logic required 
 server <- function(input, output) {
@@ -142,7 +188,8 @@ server <- function(input, output) {
   dat <- reactive({
     res <- read_rds("data/simulation_results.rds") %>% 
       filter(quarantine_days == input$quarantine_days,
-             percent_compliant %in% c(input$percent_compliant, 100)) %>% 
+             percent_compliant %in% c(input$percent_compliant, 100)) %>%
+      arrange(percent_compliant) %>% 
       mutate(percent_compliant = percent(percent_compliant/100))
     
     inf_days_summary(res, sims())})

@@ -1,19 +1,31 @@
 source('wimmy_functions.R')
 
+library(fitdistrplus)
+library(lubridate)
+
 n_sims <- 10000
 n_travellers <- 1000
 flight_time <- 2/24
 
-prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
-                           p = c(0.5, 0.975))
+# This fits gamma distribution very inexactly to quantiles taken from dashboard graphs
+#prev_gamma_pars <- gamma.parms.from.quantiles(q = c(0.005, 0.008),
+#                           p = c(0.5, 0.975))
 
-set.seed(145); prev_vector <- rgamma(n_sims, prev_gamma_pars[["shape"]], rate=prev_gamma_pars[["rate"]])
+peru_model_prevalence <- read_rds("data/peru_prevalence.rds") %>%
+  filter(date == ymd("2020-10-26"))
+
+fit.gamma <- fitdist(peru_model_prevalence$Prevalence, distr = "gamma", method = "mle")
+
+set.seed(145)
+
+prev_vector <- rgamma(n_sims, fit.gamma[["estimate"]][["shape"]], fit.gamma[["estimate"]][["rate"]])
 
 saveRDS(tibble(prev_vector), 'Shiny/data/prevalence.rds')
 
+
 slider_options <- list(
   syndromic_sensitivity = c(0.7),
-  quarantine_days = c(1:10),
+  quarantine_days = c(0:10),
   percent_compliant = c(0, 20, 40, 60 ,80, 100)
 )
 
