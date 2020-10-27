@@ -196,8 +196,8 @@ server <- function(input, output) {
   
   results <- reactive({
     bind_rows(dat(),baseline) %>% 
-      mutate(percent_compliant = factor(percent_compliant, levels = unique(percent_compliant)),
-             percent_compliant = factor(percent_compliant, levels = rev(levels(percent_compliant))))
+      mutate(percent_compliant = factor(percent_compliant, levels = c("baseline", "80%", "60%", "40%", "20%", "0%", "100%")))
+             #percent_compliant = factor(percent_compliant, levels = rev(levels(percent_compliant))))
       })
   
   dat2 <- reactive({
