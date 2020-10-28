@@ -33,13 +33,13 @@ ui <- fluidPage(
         to travelling to the mining site."),
       p("The screening strategies all take the form of a symptomatic screening
         (thermal scan and questionnaire),
-        followed by an quarantine period,
-        followed by a RT-PCR test."),
+        followed by a quarantine period,
+        and lastly a RT-PCR test."),
       p("This study examines the impact of varying the quarantine period
-        (0 to 10 days) and levels of compliance (0% to 100%) with the prescribed quarantine"),
+        (0 to 10 days) and levels of compliance (0% to 100%) with the prescribed quarantine."),
       p("We also simulated a baseline scenario that assumes only thermal scanning and
         questionnaire-based screening with no quarantine period or RT-PCT test."),
-      p("For each quarantine period and compliance level the study used 10 000
+      p("For each quarantine period and compliance level, the study used 10 000
         simulations with 1000 travellers per simulation
         each to estimate the resulting number of infectious days
         per 1000 travellers. Infectious days are a measure designed to measure the exposure of
@@ -72,9 +72,10 @@ ui <- fluidPage(
           tags$p(
             "Use the sliders to adjust the length of days in quarantine
             and the level of compliance with the quarantine."),
-          tags$p("The number of days in quarantine ranges from 1 to 10 days."),
+          tags$p("The number of days in quarantine ranges from 0 to 10 days."),
           tags$p("Compliance in this context is the percentage of employees who adhere to the 
-            quarantine protocol."
+            quarantine protocol. The compliance parameter only has an effect on the model dynamics 
+        when the number of days in quarantine is greater than zero."
           )
         )
       ),
